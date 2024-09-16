@@ -1,20 +1,20 @@
 if (COMPILE_TOOLS)
     add_executable(read_flash
-                   read_flash.c
-                   ../src/spi_flash.c
+            read_flash.c
+            ../src/spi_flash.c
     )
 
     add_executable(servo_test
-                   servo_test.cpp
-                   ../src/pwm.cpp
+            servo_test.cpp
+            ../src/pwm.cpp
     )
 
     add_executable(alt_test
-                   alt_test.cpp
+            alt_test.cpp
     )
 
     add_executable(imu_calib
-                   imu_calib.cpp
+            imu_calib.cpp
     )
 
     # pull in common dependencies

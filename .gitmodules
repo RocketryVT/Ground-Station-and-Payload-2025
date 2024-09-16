@@ -1,6 +1,0 @@
-[submodule "payload/include/pico-sdk"]
-	path = payload/include/pico-sdk
-	url = https://github.com/raspberrypi/pico-sdk
-[submodule "payload/include/eigen"]
-	path = payload/include/eigen
-	url = https://gitlab.com/libeigen/eigen.git
