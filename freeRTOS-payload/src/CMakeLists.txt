@@ -1,5 +1,7 @@
 include(../include/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/FREERTOS_KERNEL_import.cmake)
 
+set(FREE_RTOS_KERNEL_SMP 1)
+
 set(TARGET_NAME hello_freertos1)
 add_executable(${TARGET_NAME}
         hello_freertos.c
