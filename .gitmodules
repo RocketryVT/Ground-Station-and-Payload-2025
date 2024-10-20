@@ -4,3 +4,12 @@
 [submodule "payload/include/eigen"]
 	path = payload/include/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "freeRTOS-payload/include/picotool"]
+	path = freeRTOS-payload/include/picotool
+	url = https://github.com/raspberrypi/picotool
+[submodule "freeRTOS-payload/include/pico-sdk"]
+	path = freeRTOS-payload/include/pico-sdk
+	url = https://github.com/raspberrypi/pico-sdk.git
+[submodule "freeRTOS-payload/include/FreeRTOS-Kernel"]
+	path = freeRTOS-payload/include/FreeRTOS-Kernel
+	url = https://github.com/raspberrypi/FreeRTOS-Kernel
