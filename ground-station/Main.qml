@@ -5,8 +5,8 @@ import QtQuick
 import QtLocation
 import QtPositioning
 import QtQuick.Layouts
-
-// import com.example.counter 1.0
+import QtQuick.Controls
+import QtGraphs
 
 Window {
     width: Qt.platform.os === "android" ? Screen.width : 1280
@@ -14,23 +14,51 @@ Window {
     visible: true
     title: "Map"
 
-    // Create a Counter object
-    // Counter {
-    //     counter: 0
-    // }
-
     Plugin {
         id: mapPlugin
         name: "osm"
+    }
+
+    MenuBar {
+        x: 0
+        y: 0
+        width: parent.width
+        height: 40
+
+        Menu {
+            title: qsTr("&File")
+            Action { text: qsTr("&New...") }
+            Action { text: qsTr("&Open...") }
+            Action { text: qsTr("&Save") }
+            Action { text: qsTr("Save &As...") }
+            MenuSeparator { }
+            Action { 
+                text: qsTr("&Quit")
+                onTriggered: Qt.quit()
+            }
+        }
+        Menu {
+            title: qsTr("&Edit")
+            Action { text: qsTr("Cu&t") }
+            Action { text: qsTr("&Copy") }
+            Action { text: qsTr("&Paste") }
+        }
+        Menu {
+            title: qsTr("&Help")
+            Action {
+                text: qsTr("&About")
+                onTriggered: testFunction.myFunction()
+            }
+        }
     }
 
 
 
     GridLayout {
         x: 0
-        y: 0
+        y: 40
         width: parent.width
-        height: parent.height
+        height: parent.height - 40
         rowSpacing: 0
         columnSpacing: 0
         rows: 2
@@ -114,16 +142,10 @@ Window {
             Layout.fillHeight: true
             Layout.fillWidth: true
 
-            // Text {
-            //     anchors.centerIn: parent
-            //     text: "Count: " + counter.count
-            //     font.pixelSize: 40
-            // }
-
-            // MouseArea {
-            //     anchors.fill: parent
-            //     onClicked: counter.increaseCount()
-            // }
+            Text {
+                text: "Value from C++: " + counter.counter
+                anchors.centerIn: parent
+            }
         }
 
         Rectangle {
@@ -136,14 +158,56 @@ Window {
             Layout.fillWidth: true
         }
 
-        Rectangle {
-            id: rectangle2
-            color: "#781eff"
+        GraphsView {
+            id: line
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
             Layout.columnSpan: 2
             Layout.preferredHeight: 263
             Layout.preferredWidth: parent.width
+
+            axisX: ValueAxis {
+                id: axisX
+                min: 0
+                max: 60
+            }
+            
+            axisY: ValueAxis {
+                id: axisY
+                min: 0
+                max: 100
+            }
+
+            LineSeries {
+                id: lineSeries
+                color: "blue"
+            }
+        }
+
+        // Rectangle {
+        //     id: rectangle2
+        //     color: "#781eff"
+        //     Layout.fillWidth: true
+        //     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+        //     Layout.columnSpan: 2
+        //     Layout.preferredHeight: 263
+        //     Layout.preferredWidth: parent.width
+        // }
+
+
+    }
+
+    Connections {
+        target: counter
+        function onNewDataPoint(time, value) {
+            lineSeries.append(time, value)
+            console.log("New data point added:", time, value)
+            if (time > axisX.max) {
+                axisX.max = time
+            }
+            if (value > axisY.max) {
+                axisY.max = value
+            }
         }
     }
 }
