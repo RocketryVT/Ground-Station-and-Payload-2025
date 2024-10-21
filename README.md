@@ -15,16 +15,23 @@ git submodule update --init --recursive
 ```
 
 ## Download
+
 ### Payload
+
 - ### Windows
-  - Chocolatey - https://chocolatey.org/install
+
+  - Chocolatey - <https://chocolatey.org/install>
     - in an admin terminal run the following
       - `choco install cmake ninja mingw`
-  - https://developer.arm.com/downloads/-/gnu-rm
+  - <https://developer.arm.com/downloads/-/gnu-rm>
 
 ## Build
+
 ### Payload
+
 - ### Windows
+
   - Open a terminal in the payload directory
   - `cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release`
   - `cmake --build build`
+  
