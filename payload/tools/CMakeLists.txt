@@ -17,8 +17,17 @@ if (COMPILE_TOOLS)
             imu_calib.cpp
     )
 
+    add_executable(uart_usb_ftdi_cable
+        uart_usb_ftdi_cable.cpp
+    )
+
     add_executable(gps_test
-            gps_test.cpp
+        gps_test.cpp
+        ./GPS/crc.cpp
+        ./GPS/gps_helper.cpp
+        ./GPS/nmea.cpp
+        ./GPS/rtcm.cpp
+        ./GPS/unicore.cpp
     )
 
     add_executable(hello_world
@@ -36,6 +45,9 @@ if (COMPILE_TOOLS)
 
     target_link_libraries(imu_calib pico_stdlib hardware_i2c hardware_gpio)
     target_include_directories(imu_calib PUBLIC ../include)
+
+    target_link_libraries(uart_usb_ftdi_cable pico_stdlib hardware_uart)
+    target_include_directories(uart_usb_ftdi_cable PUBLIC ../include)
 
     target_link_libraries(gps_test pico_stdlib hardware_uart)
     target_include_directories(gps_test PUBLIC ../include)
@@ -55,6 +67,9 @@ if (COMPILE_TOOLS)
     pico_enable_stdio_usb(imu_calib 1)
     pico_enable_stdio_uart(imu_calib 0)
 
+    pico_enable_stdio_usb(uart_usb_ftdi_cable 1)
+    pico_enable_stdio_uart(uart_usb_ftdi_cable 0)
+
     pico_enable_stdio_usb(gps_test 1)
     pico_enable_stdio_uart(gps_test 0)
 
@@ -66,6 +81,7 @@ if (COMPILE_TOOLS)
     pico_add_extra_outputs(servo_test)
     pico_add_extra_outputs(alt_test)
     pico_add_extra_outputs(imu_calib)
+    pico_add_extra_outputs(uart_usb_ftdi_cable)
     pico_add_extra_outputs(gps_test)
     pico_add_extra_outputs(hello_world)
 endif()
