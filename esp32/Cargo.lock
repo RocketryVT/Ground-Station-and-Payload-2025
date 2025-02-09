@@ -817,7 +817,6 @@ dependencies = [
  "serde",
  "ssd1306",
  "static_cell",
- "sx126x",
  "usb-device",
  "usbd-serial",
 ]
@@ -1481,16 +1480,6 @@ dependencies = [
  "quote",
  "rustversion",
  "syn 2.0.98",
-]
-
-[[package]]
-name = "sx126x"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2270bc51fd85ec6e01ae8eb6c3bc10e9a3ae9a62b9680c9efaf9500f9f48badc"
-dependencies = [
- "critical-section",
- "embedded-hal 1.0.0",
 ]
 
 [[package]]

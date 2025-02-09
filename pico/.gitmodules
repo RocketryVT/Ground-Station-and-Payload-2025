@@ -1,9 +1,0 @@
-[submodule "libs/ism330dhcx"]
-	path = libs/ism330dhcx
-	url = https://github.com/sousandrei/ism330dhcx.git
-[submodule "libs/ADXL375"]
-	path = libs/ADXL375
-	url = git@github.com:RocketryVT/ADXL375.git
-[submodule "libs/LSM6DSO32"]
-	path = libs/LSM6DSO32
-	url = git@github.com:RocketryVT/LSM6DSO32.git
