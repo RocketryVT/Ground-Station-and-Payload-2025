@@ -1,0 +1,105 @@
+[package]
+name = "esp32-rust-test"
+version = "0.1.0"
+authors = ["Gregory Wainer <greg.wainer@gmail.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+
+defmt = { version = "0.3.1" }
+bytemuck = { version = "1.21", features = ["derive"] }
+
+embassy-executor    = { version = "0.7", features = ["task-arena-size-12288"] }
+embassy-futures = "0.1.1"
+#embassy-net = { version = "0.4.0", features = [
+#    "tcp",
+#    "udp",
+#    "dhcpv4",
+#    "medium-ethernet"
+#] }
+embassy-sync        = "0.6.1"
+embassy-time        = { version = "0.4" , features = ["generic-queue-8"] }
+embassy-usb         = { version = "0.4", default-features = false }
+embassy-embedded-hal = "0.3.0"
+embedded-hal-async = "1.0.0"
+embedded-hal = "1.0.0"
+embedded-hal-bus = "0.3"
+#embedded-can        = "0.4.1"
+#embedded-graphics   = "0.8.1"
+#embedded-io         = { version = "0.6.1", default-features = false }
+#embedded-io-async   = "0.6.1"
+#embedded-storage    = "0.3.1"
+
+esp-alloc = {  version = "0.6.0" }
+esp-backtrace = { version = "0.15", features = [
+    # "esp32s3",
+    "esp32",
+    "exception-handler",
+    "panic-handler",
+    "println",
+] }
+# esp-hal = { version = "0.23", features = ["esp32s3", "log" ] }
+esp-hal = { version = "0.23", features = ["esp32", "log" ] }
+esp-hal-embassy = { version = "0.6.0", features = [
+    "esp32",
+    # "esp32s3"
+    ]} # "integrated-timers"
+esp-println = { version = "0.13", features = [
+    "esp32",
+    # "esp32s3",
+     "log"] }
+esp-storage = { version = "0.4.0", features = [
+    "esp32",
+    # "esp32s3"
+    ] }
+esp-wifi = { version = "0.12", features = [
+    "esp32",
+    # "esp32s3",
+     "log", "esp-alloc"] }
+
+fugit = "0.3.7"
+heapless = "0.8.0"
+log = "0.4.22"
+static_cell = "2.1.0"
+usb-device = "0.3.2"
+usbd-serial = "0.2.2"
+
+# Sensor Drivers
+#ublox-core = { path = "../ublox-core", version = "0.1.0" }
+#ublox = { version = "0.4.5"}
+
+# Lora Drivers
+lora-modulation = "0.1.5"
+# lora-phy = "3.0"
+lora-phy = { git = "https://github.com/lora-rs/lora-rs.git"}
+#sx126x = "0.3.0"
+# sx126x = { git = "https://github.com/MarSik/sx126x-rs" }
+# sx126x = { path = "libs/sx126x-rs" }
+sx126x = { version = "0.3" }
+# radio-sx127x ={ version = "0.14"}
+dummy-pin = "1.0.0"
+postcard = "1.1.1"
+serde = { version = "1.0", features = ["derive"], default-features = false } 
+
+aprs-encode = "0.1.2"
+ssd1306 = "0.9"
+embedded-graphics = "0.8"
+
+[build-dependencies]
+embuild = "0.33.0"
+
+[profile.dev]
+# Rust debug is too slow.
+# For debug builds always builds with some optimization
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1 # LLVM can perform better optimizations using a single thread
+debug = 2
+debug-assertions = false
+incremental = false
+lto = 'fat'
+#opt-level = 's'
+opt-level = 3
+overflow-checks = false
