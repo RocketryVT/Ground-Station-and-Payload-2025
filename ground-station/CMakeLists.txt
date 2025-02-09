@@ -19,6 +19,7 @@ find_package(Qt6 COMPONENTS Qml)
 find_package(Qt6 COMPONENTS Quick)
 find_package(Qt6 COMPONENTS Widgets)
 find_package(Qt6 COMPONENTS Graphs)
+find_package(Qt6 REQUIRED COMPONENTS WebView)
 
 qt_add_executable(GroundStation WIN32 MACOSX_BUNDLE
     main.cpp
@@ -34,6 +35,7 @@ target_link_libraries(GroundStation PUBLIC
     Qt::Quick
     Qt::Widgets
     Qt::Graphs
+    Qt6::WebView
 )
 
 

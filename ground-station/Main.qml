@@ -7,6 +7,7 @@ import QtPositioning
 import QtQuick.Layouts
 import QtQuick.Controls
 import QtGraphs
+import QtWebView
 
 Window {
     width: Qt.platform.os === "android" ? Screen.width : 1280
@@ -64,73 +65,96 @@ Window {
         rows: 2
         columns: 2
 
-        Map {
-            id: map
+        Rectangle {
+            id: layout
             // anchors.fill: parent
-            // width: 400
-            // height: 300
+            // anchors.margins: 10
             Layout.preferredHeight: 400
             Layout.preferredWidth: parent.width/2
-            plugin: mapPlugin
-            center: QtPositioning.coordinate(59.91, 10.75) // Oslo
-            zoomLevel: 14
-            property geoCoordinate startCentroid
             Layout.rowSpan: 2
             Layout.fillHeight: true
             Layout.fillWidth: false
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-            // anchors.fill: parent
-            // anchors.leftMargin: 16
-            // anchors.rightMargin: 667
-            // anchors.topMargin: 16
-            // anchors.bottomMargin: 305
-            maximumTilt: 0.6
-            tilt: 0
-            antialiasing: true
 
-            PinchHandler {
-                id: pinch
-                target: null
-                onActiveChanged: if (active) {
-                                     map.startCentroid = map.toCoordinate(pinch.centroid.position, false)
-                                 }
-                onScaleChanged: (delta) => {
-                                    map.zoomLevel += Math.log2(delta)
-                                    map.alignCoordinateToPoint(map.startCentroid, pinch.centroid.position)
-                                }
-                onRotationChanged: (delta) => {
-                                       map.bearing -= delta
-                                       map.alignCoordinateToPoint(map.startCentroid, pinch.centroid.position)
-                                   }
-                grabPermissions: PointerHandler.TakeOverForbidden
-            }
-            WheelHandler {
-                id: wheel
-                // workaround for QTBUG-87646 / QTBUG-112394 / QTBUG-112432:
-                // Magic Mouse pretends to be a trackpad but doesn't work with PinchHandler
-                // and we don't yet distinguish mice and trackpads on Wayland either
-                acceptedDevices: Qt.platform.pluginName === "cocoa" || Qt.platform.pluginName === "wayland"
-                                 ? PointerDevice.Mouse | PointerDevice.TouchPad
-                                 : PointerDevice.Mouse
-                rotationScale: 1/120
-                property: "zoomLevel"
-            }
-            DragHandler {
-                id: drag
-                target: null
-                onTranslationChanged: (delta) => map.pan(-delta.x, -delta.y)
-            }
-            Shortcut {
-                enabled: map.zoomLevel < map.maximumZoomLevel
-                sequence: StandardKey.ZoomIn
-                onActivated: map.zoomLevel = Math.round(map.zoomLevel + 1)
-            }
-            Shortcut {
-                enabled: map.zoomLevel > map.minimumZoomLevel
-                sequence: StandardKey.ZoomOut
-                onActivated: map.zoomLevel = Math.round(map.zoomLevel - 1)
+            WebView {
+                id: webView
+                anchors.fill: parent
+                // url: "https://www.example.com"
+                // url: ":/web/index.html"
+                url: "http://127.0.0.1:5500/web/index.html"
+                settings.javaScriptEnabled: true
             }
         }
+
+        
+
+        // Map {
+        //     id: map
+        //     // anchors.fill: parent
+        //     // width: 400
+        //     // height: 300
+        //     Layout.preferredHeight: 400
+        //     Layout.preferredWidth: parent.width/2
+        //     plugin: mapPlugin
+        //     center: QtPositioning.coordinate(59.91, 10.75) // Oslo
+        //     zoomLevel: 14
+        //     property geoCoordinate startCentroid
+        //     Layout.rowSpan: 2
+        //     Layout.fillHeight: true
+        //     Layout.fillWidth: false
+        //     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+        //     // anchors.fill: parent
+        //     // anchors.leftMargin: 16
+        //     // anchors.rightMargin: 667
+        //     // anchors.topMargin: 16
+        //     // anchors.bottomMargin: 305
+        //     maximumTilt: 0.6
+        //     tilt: 0
+        //     antialiasing: true
+
+        //     PinchHandler {
+        //         id: pinch
+        //         target: null
+        //         onActiveChanged: if (active) {
+        //                              map.startCentroid = map.toCoordinate(pinch.centroid.position, false)
+        //                          }
+        //         onScaleChanged: (delta) => {
+        //                             map.zoomLevel += Math.log2(delta)
+        //                             map.alignCoordinateToPoint(map.startCentroid, pinch.centroid.position)
+        //                         }
+        //         onRotationChanged: (delta) => {
+        //                                map.bearing -= delta
+        //                                map.alignCoordinateToPoint(map.startCentroid, pinch.centroid.position)
+        //                            }
+        //         grabPermissions: PointerHandler.TakeOverForbidden
+        //     }
+        //     WheelHandler {
+        //         id: wheel
+        //         // workaround for QTBUG-87646 / QTBUG-112394 / QTBUG-112432:
+        //         // Magic Mouse pretends to be a trackpad but doesn't work with PinchHandler
+        //         // and we don't yet distinguish mice and trackpads on Wayland either
+        //         acceptedDevices: Qt.platform.pluginName === "cocoa" || Qt.platform.pluginName === "wayland"
+        //                          ? PointerDevice.Mouse | PointerDevice.TouchPad
+        //                          : PointerDevice.Mouse
+        //         rotationScale: 1/120
+        //         property: "zoomLevel"
+        //     }
+        //     DragHandler {
+        //         id: drag
+        //         target: null
+        //         onTranslationChanged: (delta) => map.pan(-delta.x, -delta.y)
+        //     }
+        //     Shortcut {
+        //         enabled: map.zoomLevel < map.maximumZoomLevel
+        //         sequence: StandardKey.ZoomIn
+        //         onActivated: map.zoomLevel = Math.round(map.zoomLevel + 1)
+        //     }
+        //     Shortcut {
+        //         enabled: map.zoomLevel > map.minimumZoomLevel
+        //         sequence: StandardKey.ZoomOut
+        //         onActivated: map.zoomLevel = Math.round(map.zoomLevel - 1)
+        //     }
+        // }
 
         Rectangle {
             id: rectangle1
