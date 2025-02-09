@@ -13,3 +13,6 @@
 [submodule "freeRTOS-payload/include/FreeRTOS-Kernel"]
 	path = freeRTOS-payload/include/FreeRTOS-Kernel
 	url = https://github.com/raspberrypi/FreeRTOS-Kernel
+[submodule "esp32/libs/ADXL375"]
+	path = esp32/libs/ADXL375
+	url = git@github.com:RocketryVT/ADXL375.git

@@ -76,7 +76,7 @@ lora-phy = { git = "https://github.com/lora-rs/lora-rs.git"}
 #sx126x = "0.3.0"
 # sx126x = { git = "https://github.com/MarSik/sx126x-rs" }
 # sx126x = { path = "libs/sx126x-rs" }
-sx126x = { version = "0.3" }
+# sx126x = { version = "0.3" }
 # radio-sx127x ={ version = "0.14"}
 dummy-pin = "1.0.0"
 postcard = "1.1.1"
