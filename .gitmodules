@@ -13,12 +13,12 @@
 [submodule "freeRTOS-payload/include/FreeRTOS-Kernel"]
 	path = freeRTOS-payload/include/FreeRTOS-Kernel
 	url = https://github.com/raspberrypi/FreeRTOS-Kernel
-[submodule "pico/libs/ism330dhcx"]
-	path = pico/libs/ism330dhcx
-	url = https://github.com/RocketryVT/ISM330DHCX.git
+[submodule "pico/libs/LSM6DSO32"]
+	path = pico/libs/LSM6DSO32
+	url = git@github.com:RocketryVT/LSM6DSO32.git
 [submodule "pico/libs/ADXL375"]
 	path = pico/libs/ADXL375
 	url = https://github.com/RocketryVT/ADXL375.git
-[submodule "pico/libs/LSM6DSO32"]
-	path = pico/libs/LSM6DSO32
-	url = https://github.com/RocketryVT/LSM6DSO32.git
+[submodule "pico/libs/ISM330DHCX"]
+	path = pico/libs/ISM330DHCX
+	url = https://github.com/RocketryVT/ISM330DHCX.git
