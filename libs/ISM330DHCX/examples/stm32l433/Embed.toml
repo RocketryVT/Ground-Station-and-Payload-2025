@@ -1,5 +1,0 @@
-[default.general]
-chip = "STM32L433RCTxP"
-
-[default.rtt]
-enabled = true
