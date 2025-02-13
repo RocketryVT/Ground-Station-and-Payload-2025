@@ -1,24 +1,33 @@
-[submodule "payload/include/pico-sdk"]
-	path = payload/include/pico-sdk
+[submodule "old/payload/include/pico-sdk"]
+	path = old/payload/include/pico-sdk
 	url = https://github.com/raspberrypi/pico-sdk
-[submodule "payload/include/eigen"]
-	path = payload/include/eigen
+[submodule "old/payload/include/eigen"]
+	path = old/payload/include/eigen
 	url = https://gitlab.com/libeigen/eigen.git
-[submodule "freeRTOS-payload/include/picotool"]
-	path = freeRTOS-payload/include/picotool
+[submodule "old/freeRTOS-payload/include/picotool"]
+	path = old/freeRTOS-payload/include/picotool
 	url = https://github.com/raspberrypi/picotool
-[submodule "freeRTOS-payload/include/pico-sdk"]
-	path = freeRTOS-payload/include/pico-sdk
+[submodule "old/freeRTOS-payload/include/pico-sdk"]
+	path = old/freeRTOS-payload/include/pico-sdk
 	url = https://github.com/raspberrypi/pico-sdk.git
-[submodule "freeRTOS-payload/include/FreeRTOS-Kernel"]
-	path = freeRTOS-payload/include/FreeRTOS-Kernel
+[submodule "old/freeRTOS-payload/include/FreeRTOS-Kernel"]
+	path = old/freeRTOS-payload/include/FreeRTOS-Kernel
 	url = https://github.com/raspberrypi/FreeRTOS-Kernel
-[submodule "pico/libs/LSM6DSO32"]
-	path = pico/libs/LSM6DSO32
+[submodule "libs/LSM6DSO32"]
+	path = libs/LSM6DSO32
 	url = git@github.com:RocketryVT/LSM6DSO32.git
-[submodule "pico/libs/ADXL375"]
-	path = pico/libs/ADXL375
+[submodule "libs/ADXL375"]
+	path = libs/ADXL375
 	url = https://github.com/RocketryVT/ADXL375.git
-[submodule "pico/libs/ISM330DHCX"]
-	path = pico/libs/ISM330DHCX
+[submodule "libs/ISM330DHCX"]
+	path = libs/ISM330DHCX
 	url = https://github.com/RocketryVT/ISM330DHCX.git
+[submodule "libs/UBLOX-rs"]
+	path = libs/UBLOX-rs
+	url = https://github.com/RocketryVT/UBLOX-rs.git
+[submodule "libs/Controls"]
+	path = libs/Controls
+	url = https://github.com/RocketryVT/Controls.git
+[submodule "libs/Mesh"]
+	path = libs/Mesh
+	url = https://github.com/RocketryVT/Mesh.git
