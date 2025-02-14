@@ -7,20 +7,26 @@
 
 #![no_std]
 #![no_main]
+#![deny(clippy::float_arithmetic)]
 
+
+use core::f32::consts::SQRT_2;
+
+use chrono::{NaiveDate, TimeZone};
+use chrono_tz::America::New_York;
 use static_cell::StaticCell;
 
 use embassy_executor::Spawner;
 use embassy_rp::i2c::{self, Async, I2c};
 use embassy_rp::{bind_interrupts, peripherals::*};
 use embassy_sync::blocking_mutex::raw::NoopRawMutex;
-use embassy_time::{Instant, Timer};
+use embassy_time::Timer;
 use embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice;
 use embassy_rp::peripherals::USB;
 use embassy_rp::usb::{Driver, InterruptHandler as UsbInterruptHandler};
 use embassy_sync::mutex::Mutex;
 use embassy_time::Delay;
-use ublox::Parser;
+use ublox::{PacketRef, Parser};
 use UBLOX_rs;
 
 use defmt_rtt as _;
@@ -73,31 +79,97 @@ async fn gps_reader(i2c_bus: &'static I2c1Bus) {
         output_rtcm: false,
     };
     let mut gps =
-        UBLOX_rs::UBLOX::<I2cDevice<'_, NoopRawMutex, I2c<'static, I2C1, Async>>>::try_new(
+        UBLOX_rs::UBLOX::<I2cDevice<'_, NoopRawMutex, I2c<'static, I2C1, Async>>, Delay>::try_new(
             i2c_dev,
-            UBLOX_rs::Address::Default,
+            UBLOX_rs::Address::Custom(0x42),
             Delay,
             &ublox_config,
         )
         .await
         .expect("Failed to initialize GPS");
 
-    let is_connected = gps.is_connected().await.unwrap();
-    loop {
-        info!("GPS is connected: {}", is_connected);
-    }
+    gps.enable_ubx_nav_pvt().await.unwrap();
+    gps.enable_ubx_time_utc().await.unwrap();
+    Timer::after_millis(500).await; // Wait for the GPS to start sending data (Ideally, the library should handle this but this will do for now)
 
 
     use ublox::FixedLinearBuffer;
-
-    let mut data_buffer = [0u8; 2048];
+    let mut data_buffer = [0u8; 128];
     let fixed_buffer = FixedLinearBuffer::new(&mut data_buffer);
     let mut parser = Parser::new(fixed_buffer);
 
     info!("Reading GPS data...");
 
     loop {
-        let data = gps.get_data().await.unwrap().unwrap();
-        parser.consume(&data.buffer);
+        let data = gps.get_data()
+            .await
+            .unwrap()
+            .unwrap();
+        let mut output = parser.consume(&data);
+        loop {
+            match output.next() {
+                Some(Ok(PacketRef::NavPvt(message))) => {
+                    info!("Latitude: {}, Longitude: {}", message.lat_degrees(), message.lon_degrees());
+                    info!("Altitude: {} m", message.height_meters());
+                    info!("Altitude MSL: {} m", message.height_msl());
+                    info!("Ground Speed: {} m/s", message.ground_speed());
+                    // let vel_north = message.vel_north() as f32;
+                    // let vel_east = message.vel_east() as f32;
+                    // let vel_down = message.vel_down() as f32;
+                    // let true_airspeed = (vel_north * vel_north + vel_east * vel_east + vel_down * vel_down) * SQRT_2;
+                    // let altitude = message.height_msl() as f32;
+                    // let mach_speed = true_airspeed / calculate_speed_of_sound(altitude);
+                    // info!("True Airspeed: {} m/s", true_airspeed);
+                    // info!("Mach Speed: {}", mach_speed);
+                    // info!("Velocity North: {} m/s", vel_north);
+                    // info!("Velocity East: {} m/s", vel_east);
+                    // info!("Velocity Down: {} m/s", vel_down);
+                    info!("Heading: {} degrees", message.heading_degrees());
+                    info!("Number of Satellites: {}", message.num_satellites());
+                    info!("Fix Type: {:?}", message.fix_type());
+                    info!("Flags: {:?}", message.flags());
+                    info!("Valid: {:?}", message.valid());
+                }
+                Some(Ok(PacketRef::NavTimeUTC(message))) => {    
+                    let date = NaiveDate::from_ymd_opt(message.year() as i32, message.month() as u32, message.day() as u32).unwrap_or_default()
+                        .and_hms_opt(message.hour() as u32, message.min() as u32, message.sec() as u32).unwrap_or_default();
+                    let ny = New_York.from_utc_datetime(&date);
+                    info!("New York Time: {}", ny);
+                }
+                Some(Ok(packet)) => {
+                    info!("Packet: {:?}", packet);
+                }
+                Some(Err(e)) => {
+                    // Received a malformed packet
+                    info!("Error: {:?}", e);
+                }
+                None => {
+                    // The internal buffer is now empty
+                    break;
+                }
+            }
+        }
+        // 250 ms is the minimal recommended delay between reading data on I2C, UART is 1100 ms.
+        Timer::after_millis(250).await;
     }
+}
+
+/// Calculate the speed of sound at a given altitude in meters.
+/// This is a simplified calculation and may not be accurate for all conditions.
+#[allow(unused)]
+fn calculate_speed_of_sound(altitude: f32) -> f32 {
+    // Speed of sound at sea level in m/s
+    let speed_of_sound_sea_level: f32 = 343.0;
+
+    // Temperature lapse rate in K/m
+    let lapse_rate: f32 = 0.0065;
+
+    // Temperature at sea level in K
+    let temp_sea_level: f32 = 288.15;
+
+    // Calculate temperature at the given altitude
+    let temp_at_altitude = temp_sea_level - lapse_rate * altitude;
+
+    // Calculate speed of sound at the given altitude
+    speed_of_sound_sea_level * (temp_at_altitude / temp_sea_level) * SQRT_2
 }

@@ -39,12 +39,15 @@ mavlink = { version = "0.13", features = ["common", "embedded"], default-feature
 
 static_cell = { version = "2.0.0" }
 portable-atomic = { version = "1.5", features = ["critical-section"] }
+chrono = { version = "0.4", default-features = false}
+chrono-tz = { version = "0.10", default-features = false}
+hifitime = { version = "4.0", default-features = false}
 
-UBLOX_rs = { path = "./libs/UBLOX-rs" }
-ublox = { version = "0.4.5", default-features = false}
-ism330dhcx = { version = "0.6.0", path = "./libs/ISM330DHCX/" }
-LSM6DSO32 = { version = "0.0.1", path = "./libs/LSM6DSO32/" }
-ADXL375 = { version = "0.0.1", path = "./libs/ADXL375/" }
+UBLOX_rs = { path = "../libs/UBLOX-rs" }
+ublox = { version = "0.4", default-features = false}
+ism330dhcx = { version = "0.6.0", path = "../libs/ISM330DHCX/" }
+LSM6DSO32 = { version = "0.0.1", path = "../libs/LSM6DSO32/" }
+ADXL375 = { version = "0.0.1", path = "../libs/ADXL375/" }
 bmp390 = { version = "0.4" }
 
 [profile.release]
