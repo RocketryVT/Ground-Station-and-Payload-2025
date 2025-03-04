@@ -16,6 +16,8 @@ use lora_phy::sx126x::{Sx1262, Sx126x, TcxoCtrlVoltage};
 use lora_phy::{mod_params::*, sx126x};
 use lora_phy::LoRa;
 
+// use Mesh::protocol;
+
 const LORA_FREQUENCY_IN_HZ: u32 = 905_200_000; // warning: set this appropriately for the region
 
 #[esp_hal_embassy::main]
@@ -92,6 +94,8 @@ async fn main(_spawner: Spawner) {
     };
 
     let buffer = [0x01u8, 0x02u8, 0x03u8];
+    // let buffer = Mesh::protocol::AprsCompressedPositionReport {
+    // }
 
     loop {
         match lora

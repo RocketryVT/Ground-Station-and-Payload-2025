@@ -1,118 +1,12 @@
 #![no_std]
 #![no_main]
 
-/// # Ground Station Overview
-///
-/// This file contains the code for the ground station running on a RadioMaster Bandit Micro ELRS board.
-/// The board has been reflashed from ELRS to our custom firmware to support LoRa communication.
-///
-/// ## Hardware Details
-///
-/// - **Board:** RadioMaster Bandit Micro ELRS
-/// - **Microcontroller:** ESP32
-/// - **Secondary Microcontroller:** ESP8285
-/// - **Radio Module:** SX1276
-/// - **Frequency:** 905.2 MHz (This needs to be changed once IREC provides the frequency)
-/// 
-/// - **SX1276 SPI Pins:**
-/// 
-/// | SX1276 Pin | ESP32 Pin |
-/// |------------|-----------|
-/// | NSS        | GPIO4     |
-/// | SCK        | GPIO18    |
-/// | MOSI       | GPIO23    |
-/// | MISO       | GPIO19    |
-/// | RST        | GPIO5     |
-/// | DIO0       | GPIO22    |
-/// | DIO1       | GPIO21    |
-/// 
-/// DCDC is enabled and the TCXO control voltage is set to 1.8V (Unlike the SX1262, the SX1276 does not have a variable TCXO control voltage).
-/// RFO HF output is used/true (This is over using PA_BOOST).
-/// No Custom Antenna pin is used
-/// 
-/// ## ELRS Config for reference
-/// 
-/// **Comments are found on the /hardware.html on the ELRS wifi firmware page (device itself makes a wifi network)**
-/// **Other pages that may be avaible, cw.html (continous wave for crystal verification), lr1121.html, index.html, hardware.html
-///
-/// | Parameter              | Value     |  Detail |
-/// |------------------------|-----------|         |
-/// | crsf_serial_rx         | 13        | I belive these are the RX/TX Pins found inside the module (unsrew it), fyi CRSF is inverted S.BUS (https://oscarliang.com/rc-protocols/) |
-/// | crsf_serial_tx         | 13        | |
-/// | radio_dio0             | 22        | |
-/// | radio_dio1             | 21        | |
-/// | radio_miso             | 19        | |
-/// | radio_mosi             | 23        | |
-/// | radio_nss              | 4         | |
-/// | radio_rst              | 5         | |
-/// | radio_sck              | 18        | |
-/// | radio_dcdc             | true      | Use the SX1280 DC-DC converter rather than LDO voltage regulator (15uH inductor must be present) |
-/// | radio_rfo_hf           | true      | SX127x PA to use, either the RFO_HF or PA_BOOST (depends on circuit design) |
-/// | power_txen             | 33        | Enable TX mode PA (active high) |
-/// | power_apc2             | 26        | Power amplifier control voltage |
-/// | power_min              | 3         | 100mW (0-7 = 10mW, 25mW, 50mW, 100mW, 250mW, 500mW, 1000mW, 2000mW) |
-/// | power_high             | 6         | 1000mW |
-/// | power_max              | 6         | 1000mW |
-/// | power_default          | 3         | 100mW |
-/// | power_control          | 3         | ESP DACWRITE (2 = SEMTECH) |
-/// | power_values           | [168, 148, 128, 90] | Comma-separated list of values that set the power output (if using a DAC these are the DAC values) |
-/// | power_values2          | [2, 6, 9, 12]       | Comma-separated list of values that set the power output (if using a DAC then these set the Semtech power output) |
-/// | use_backpack           | true      | |
-/// | debug_backpack_baud    | 460800    | |
-/// | debug_backpack_rx      | 16        | Connected to TX pin on backpack |
-/// | debug_backpack_tx      | 17        | Connected to RX pin on backpack |
-/// | backpack_boot          | 32        | Pin connected to GPIO0 pin on backpack ESP8285, allows passthrough flashing |
-/// | backpack_en            | 25        | Pin connected to EN pin on backpack ESP8285, allows passthrough flashing |
-/// | passthrough_baud       | 230400    | |
-/// | led_red                | 15        | |
-/// | led_red_invert         | true      | |
-/// | misc_fan_en            | 2         | There is no fan present on the Micro so idk why this is here? |
-/// | screen_type            | 1         | SSD1306 128x64 |
-/// | screen_sck             | 12        | |
-/// | screen_sda             | 14        | |
-/// | screen_reversed        | true      | Select to rotate the display 180 degrees |
-/// | joystick               | 39        | Analog Input (3.3V max) use to read joystick direction using a resistor network |
-/// | joystick_values        | [3227, 0, 1961, 2668, 1290, 4095] | Comma-separated list of ADC values (12-bit) for UP, DOWN, LEFT, RIGHT, ENTER, IDLE |
-///
-///
-/// ## Features
-///
-/// - LoRa communication using the SX1276 radio module.
-/// - SPI interface for communication with the radio module.
-/// - Timer for scheduling tasks.
-/// - Outputs received data to the console/USB.
-///
-/// ## Setup
-///
-/// 1. Flash the RadioMaster Bandit Micro ELRS board with this firmware by pressing and holding the button while connecting the USB cable.
-/// 3. Configure the frequency and other parameters as needed.
-///
-/// ## Usage
-///
-/// This firmware initializes the hardware and sets up the LoRa communication.
-/// The main function is the entry point of the application, which initializes the peripherals and starts the tasks.
-///
-/// Example documentation:
-/// ```rust
-/// #[esp_hal_embassy::main]
-/// async fn main(_spawner: Spawner) {
-///     esp_println::logger::init_logger_from_env();
-///     let peripherals = esp_hal::init(esp_hal::Config::default());
-///     let timg0 = TimerGroup::new(peripherals.TIMG0);
-///     esp_hal_embassy::init(timg0.timer0);
-///
-///     println!("Init");
-///     // Additional initialization and task spawning code here
-/// }
-/// ```
-///
-
 use defmt::*;
 use embassy_executor::Spawner;
 use embassy_time::Timer;
 
+use byteorder::{ByteOrder, LittleEndian};
 use esp_hal::spi::{Mode, master::Spi, master::Config};
-
 use esp_println::println;
 
 use esp_backtrace as _;
@@ -121,30 +15,42 @@ use esp_hal::{
     timer::timg::TimerGroup,
 };
 
-use lora_phy::iv::GenericSx127xInterfaceVariant;
-use lora_phy::sx127x::{self, Sx127x, Sx1276};
+use lora_phy::iv::GenericSx126xInterfaceVariant;
+use lora_phy::sx126x::{Sx1262, Sx126x, TcxoCtrlVoltage};
+use lora_phy::sx126x;
 use lora_phy::{LoRa, RxMode};
 
 const RF_FREQUENCY: u32 = 905_200_000;
 
+#[derive(Debug)]
+struct GpsData {
+    lat: f64,
+    lon: f64,
+    alt: f64,
+    alt_msl: f64,
+    num_satellites: u16,
+    fix_type: u16,
+    time: i64,
+}
 
 #[esp_hal_embassy::main]
 async fn main(_spawner: Spawner) {
     esp_println::logger::init_logger_from_env();
     let peripherals = esp_hal::init(esp_hal::Config::default());
-    let timg0 = TimerGroup::new(peripherals.TIMG0);
-    esp_hal_embassy::init(timg0.timer0);
 
     println!("Init");
 
-    let lora_nss = esp_hal::gpio::Output::new(peripherals.GPIO4, esp_hal::gpio::Level::High);
-    let lora_sck = peripherals.GPIO18;
-    let lora_mosi = peripherals.GPIO23;
-    let lora_miso = peripherals.GPIO19;
-    let lora_rst = esp_hal::gpio::Output::new(peripherals.GPIO5, esp_hal::gpio::Level::High);
-    // let lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO13, esp_hal::gpio::Pull::None);
-    let lora_dio0 = esp_hal::gpio::Input::new(peripherals.GPIO22, esp_hal::gpio::Pull::None);
-    let lora_dio1 = esp_hal::gpio::Input::new(peripherals.GPIO21, esp_hal::gpio::Pull::None);
+    let timg0 = TimerGroup::new(peripherals.TIMG0);
+    esp_hal_embassy::init(timg0.timer0);
+
+    // According to Heltec V32 Page
+    let lora_nss = esp_hal::gpio::Output::new(peripherals.GPIO8, esp_hal::gpio::Level::High);
+    let lora_sck = peripherals.GPIO9;
+    let lora_mosi = peripherals.GPIO10;
+    let lora_miso = peripherals.GPIO11;
+    let lora_rst = esp_hal::gpio::Output::new(peripherals.GPIO12, esp_hal::gpio::Level::High);
+    let lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO13, esp_hal::gpio::Pull::None);
+    let lora_dio1 = esp_hal::gpio::Input::new(peripherals.GPIO14, esp_hal::gpio::Pull::None);
     // let lora_ant = dummy_pin::DummyPin::new_high();
 
     println!("Init LoRa");
@@ -160,22 +66,24 @@ async fn main(_spawner: Spawner) {
         .into_async();
     let spi2 = embassy_sync::mutex::Mutex::<esp_hal::sync::RawMutex, _>::new(spi2);
 
-    let config = sx127x::Config {
-        chip: Sx1276,
-        tcxo_used: true, // This might be wrong
-        tx_boost: false, // RFO_HF
-        rx_boost: false, // Maybe this should be true?
+    let config = sx126x::Config {
+        chip: Sx1262,
+        tcxo_ctrl: Some(TcxoCtrlVoltage::Ctrl1V8),
+        use_dcdc: true,
+        rx_boost: true,
     };
-    let iv = GenericSx127xInterfaceVariant::new(
+    let iv = GenericSx126xInterfaceVariant::new(
         lora_rst,
-        lora_dio0,
+        lora_dio1,
+        lora_busy,
         None,
         None,
     ).unwrap();
 
     let mut device= embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice::new(&spi2, lora_nss);
 
-    let mut lora = LoRa::with_syncword(Sx127x::new(&mut device, iv, config), 0x12, embassy_time::Delay).await.unwrap();
+    let mut lora = LoRa::with_syncword(Sx126x::new(&mut device, iv, config), 0x12, embassy_time::Delay).await.unwrap();
+
     // Lora has a max packet size of 256 bytes
     let mut receiving_buffer = [00u8; 256];
 
@@ -217,14 +125,34 @@ async fn main(_spawner: Spawner) {
 
     println!("Start RX");
 
+    // #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+    // struct RefStruct<'a> {
+    //     int: &'a [u8],
+    // }
+
     loop {
-        println!("rx loop");
+        // println!("rx loop");
         receiving_buffer = [00u8; 256];
         match lora.rx(&rx_pkt_params, &mut receiving_buffer).await {
             Ok((received_len, _rx_pkt_status)) => {
-                    println!("rx successful");
-                    println!("rx data = {:?}", &receiving_buffer[..received_len as usize]);
-                    Timer::after_secs(5).await;
+                let received_data = &receiving_buffer[..received_len as usize];
+                println!("{:?}", received_data);
+
+                if received_len >= 48 {
+                    let gps_data = GpsData {
+                        lat: LittleEndian::read_f64(&received_data[0..8]),
+                        lon: LittleEndian::read_f64(&received_data[8..16]),
+                        alt: LittleEndian::read_f64(&received_data[16..24]),
+                        alt_msl: LittleEndian::read_f64(&received_data[24..32]),
+                        num_satellites: LittleEndian::read_u16(&received_data[32..34]),
+                        fix_type: LittleEndian::read_u16(&received_data[34..36]),
+                        time: LittleEndian::read_i64(&received_data[36..44]),
+                    };
+
+                    println!("Received GPS Data: {:?}", gps_data);
+                } else {
+                    println!("Received data length is too short");
+                }
                 }
             Err(err) => println!("rx unsuccessful = {:?}", err),
         }

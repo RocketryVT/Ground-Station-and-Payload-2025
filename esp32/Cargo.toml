@@ -7,23 +7,18 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 
-defmt = { version = "0.3.1" }
+defmt = { version = "0.3" }
 bytemuck = { version = "1.21", features = ["derive"] }
 
 embassy-executor    = { version = "0.7", features = ["task-arena-size-12288"] }
-embassy-futures = "0.1.1"
-#embassy-net = { version = "0.4.0", features = [
-#    "tcp",
-#    "udp",
-#    "dhcpv4",
-#    "medium-ethernet"
-#] }
-embassy-sync        = "0.6.1"
+embassy-futures = "0.1"
+embassy-sync        = "0.6"
 embassy-time        = { version = "0.4" , features = ["generic-queue-8"] }
 embassy-usb         = { version = "0.4", default-features = false }
-embassy-embedded-hal = "0.3.0"
-embedded-hal-async = "1.0.0"
-embedded-hal = "1.0.0"
+embassy-embedded-hal = "0.3"
+embedded-hal-async = "1.0"
+embedded-io-async ={ version = "0.6", default-features = false }
+embedded-hal = "1.0"
 embedded-hal-bus = "0.3"
 #embedded-can        = "0.4.1"
 #embedded-graphics   = "0.8.1"
@@ -33,61 +28,49 @@ embedded-hal-bus = "0.3"
 
 esp-alloc = {  version = "0.6.0" }
 esp-backtrace = { version = "0.15", features = [
-    # "esp32s3",
-    "esp32",
     "exception-handler",
     "panic-handler",
     "println",
 ] }
-# esp-hal = { version = "0.23", features = ["esp32s3", "log" ] }
-esp-hal = { version = "0.23", features = ["esp32", "log" ] }
-esp-hal-embassy = { version = "0.6.0", features = [
-    "esp32",
-    # "esp32s3"
-    ]} # "integrated-timers"
-esp-println = { version = "0.13", features = [
-    "esp32",
-    # "esp32s3",
-     "log"] }
-esp-storage = { version = "0.4.0", features = [
-    "esp32",
-    # "esp32s3"
-    ] }
-esp-wifi = { version = "0.12", features = [
-    "esp32",
-    # "esp32s3",
-     "log", "esp-alloc"] }
+esp-hal = { version = "0.23", features = ["log" ] }
+esp-hal-embassy = { version = "0.6.0", features = []} # "integrated-timers"
+esp-println = { version = "0.13", features = ["log"] }
+esp-storage = { version = "0.4.0", features = [] }
+esp-wifi = { version = "0.12", features = ["log", "esp-alloc"] }
 
-fugit = "0.3.7"
-heapless = "0.8.0"
-log = "0.4.22"
-static_cell = "2.1.0"
-usb-device = "0.3.2"
-usbd-serial = "0.2.2"
+fugit = "0.3"
+heapless = "0.8"
+log = "0.4"
+static_cell = "2.1"
+usb-device = "0.3"
+usbd-serial = "0.2"
+
+byteorder ={ version = "1.5", default-features = false }
 
 # Sensor Drivers
-#ublox-core = { path = "../ublox-core", version = "0.1.0" }
-#ublox = { version = "0.4.5"}
+ublox = { version = "0.4", default-features = false}
+UBLOX_rs = { path ="../libs/UBLOX-rs" }
+chrono = { version = "0.4", default-features = false}
+chrono-tz = { version = "0.10", default-features = false}
 
 # Lora Drivers
-lora-modulation = "0.1.5"
-# lora-phy = "3.0"
+lora-modulation = "0.1"
 lora-phy = { git = "https://github.com/lora-rs/lora-rs.git"}
-#sx126x = "0.3.0"
-# sx126x = { git = "https://github.com/MarSik/sx126x-rs" }
-# sx126x = { path = "libs/sx126x-rs" }
-# sx126x = { version = "0.3" }
-# radio-sx127x ={ version = "0.14"}
-dummy-pin = "1.0.0"
-postcard = "1.1.1"
-serde = { version = "1.0", features = ["derive"], default-features = false } 
+dummy-pin = "1.0"
+postcard = "1.0"
 
-aprs-encode = "0.1.2"
+Mesh = { path = "../libs/Mesh" }
 ssd1306 = "0.9"
 embedded-graphics = "0.8"
 
+[features]
+default = ["esp32s3"]
+esp32 = ["esp-hal/esp32", "esp-hal-embassy/esp32", "esp-println/esp32", "esp-backtrace/esp32", "esp-storage/esp32", "esp-wifi/esp32"]
+esp32s3 = ["esp-hal/esp32s3", "esp-hal-embassy/esp32s3", "esp-println/esp32s3", "esp-backtrace/esp32s3", "esp-storage/esp32s3", "esp-wifi/esp32s3"]
+rm_ground_station = ["esp32"]
+
 [build-dependencies]
-embuild = "0.33.0"
+embuild = "0.33"
 
 [profile.dev]
 # Rust debug is too slow.
