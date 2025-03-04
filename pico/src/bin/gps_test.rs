@@ -34,10 +34,12 @@ use log::info;
 use panic_probe as _;
 
 type I2c1Bus = Mutex<NoopRawMutex, I2c<'static, I2C1, i2c::Async>>;
+type I2c0Bus = Mutex<NoopRawMutex, I2c<'static, I2C0, i2c::Async>>;
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => UsbInterruptHandler<USB>;
     I2C1_IRQ => embassy_rp::i2c::InterruptHandler<I2C1>;
+    I2C0_IRQ => embassy_rp::i2c::InterruptHandler<I2C0>;
 });
 
 // Async task for USB logging.
@@ -58,20 +60,26 @@ async fn main(spawner: Spawner) {
     let mut ic2_config = embassy_rp::i2c::Config::default();
     ic2_config.frequency = 400_000;
 
-    let i2c_scl = p.PIN_3;
-    let i2c_sda = p.PIN_2;
+    // Shared I2C0 Bus
+    // let i2c0_scl = p.PIN_13;
+    // let i2c0_sda = p.PIN_12;
+    // let i2c0: I2c<'_, I2C0, Async> = I2c::new_async(p.I2C0, i2c0_scl, i2c0_sda, Irqs, ic2_config);
+    // static I2C0_BUS: StaticCell<I2c0Bus> = StaticCell::new();
+    // let i2c0_bus = I2C0_BUS.init(Mutex::new(i2c0));
 
-    // Shared I2C bus
-    let i2c1 = I2c::new_async(p.I2C1, i2c_scl, i2c_sda, Irqs, ic2_config);
-    static I2C_BUS: StaticCell<I2c1Bus> = StaticCell::new();
-    let i2c1_bus = I2C_BUS.init(Mutex::new(i2c1));
+    // Shared I2C0 Bus
+    let i2c0_scl = p.PIN_13;
+    let i2c0_sda = p.PIN_12;
+    let i2c0: I2c<'_, I2C0, Async> = I2c::new_async(p.I2C0, i2c0_scl, i2c0_sda, Irqs, ic2_config);
+    static I2C0_BUS: StaticCell<I2c0Bus> = StaticCell::new();
+    let i2c0_bus = I2C0_BUS.init(Mutex::new(i2c0));
 
     // Spawn tasks
-    spawner.spawn(gps_reader(i2c1_bus)).unwrap();
+    spawner.spawn(gps_reader(i2c0_bus)).unwrap();
 }
 
 #[embassy_executor::task]
-async fn gps_reader(i2c_bus: &'static I2c1Bus) {
+async fn gps_reader(i2c_bus: &'static I2c0Bus) {
     let i2c_dev = I2cDevice::new(i2c_bus);
     let ublox_config = UBLOX_rs::Configuration {
         output_nmea: false,
@@ -79,7 +87,7 @@ async fn gps_reader(i2c_bus: &'static I2c1Bus) {
         output_rtcm: false,
     };
     let mut gps =
-        UBLOX_rs::UBLOX::<I2cDevice<'_, NoopRawMutex, I2c<'static, I2C1, Async>>, Delay>::try_new(
+        UBLOX_rs::UBLOX::<I2cDevice<'_, NoopRawMutex, I2c<'static, I2C0, Async>>, Delay>::try_new(
             i2c_dev,
             UBLOX_rs::Address::Custom(0x42),
             Delay,

@@ -3,57 +3,38 @@
 #![no_main]
 #![no_std]
 
-// Panic handler
-// use panic_rtt_target as _;
-
 use embassy_executor::Spawner;
-use embassy_rp::uart::{BufferedInterruptHandler, BufferedUartRx};
-// use embassy_rp::gpio::{ Level, Output};
-// use embassy_rp::uart::{BufferedInterruptHandler, BufferedUart, BufferedUartRx, Config};
+use embassy_rp::uart::{BufferedInterruptHandler, BufferedUart};
+// use embassy_rp::uart::{BufferedInterruptHandler, BufferedUart, BufferedUartRx, BufferedUartTx, Config};
 use embassy_rp::{bind_interrupts, peripherals::*};
 use embassy_rp::peripherals::USB;
 use embassy_rp::usb::{Driver, InterruptHandler as UsbInterruptHandler};
 use embassy_time::Timer;
 
-use mavlink::{self, read_v2_raw_message_async, MavlinkVersion, MessageData};
-use mavlink::common::{MavMessage, HEARTBEAT_DATA};
+// use mavlink::common::{MavMessage, HEARTBEAT_DATA};
 // use mavlink::{read_v2_raw_message_async, MAVLinkV2MessageRaw, MavlinkVersion, MessageData};
+// use static_cell::{ConstStaticCell, StaticCell};
 
 use defmt_rtt as _;
-use panic_probe as _;
-// use static_cell::ConstStaticCell;
-
 use log::info;
+use panic_probe as _;
+use static_cell::StaticCell;
 
 bind_interrupts!(struct Irqs {
     // UART0_IRQ => InterruptHandler<UART0>;
     UART0_IRQ => BufferedInterruptHandler<UART0>;
     USBCTRL_IRQ => UsbInterruptHandler<USB>;
 });
-// static RX_BUFFER: ConstStaticCell<[u8; 1024]> = ConstStaticCell::new([0; 1024]);
-// static TX_BUFFER: ConstStaticCell<[u8; 1024]> = ConstStaticCell::new([0; 1024]);
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    // rtt_init_print!();
 
     // Peripherals access
     let p = embassy_rp::init(Default::default());
 
     // Set up USB
     let usb_driver = Driver::new(p.USB, Irqs);
-    spawner.spawn(logger_task(usb_driver)).unwrap();
-
-    // STEMMA QT is on GPIO2 (SDA/PIN 4) and GPIO3 (SCL/PIN 5), Embassy must use I2C0
-    let mut ic2_config = embassy_rp::i2c::Config::default();
-    ic2_config.frequency = 100_000;
-
-    // let i2c_scl = p.PIN_3;
-    // let i2c_sda = p.PIN_2;
-
-    // let i2c0 = embassy_rp::i2c::I2c::new_blocking(p.I2C1, i2c_scl, i2c_sda, ic2_config);
-
-    
+    spawner.spawn(logger_task(usb_driver)).unwrap();    
 
     // let usb_config = {
     //     let mut config = embassy_usb::Config::new(0xc0de, 0xcafe);
@@ -102,38 +83,20 @@ async fn main(spawner: Spawner) {
     //     info!("Disconnected");
     // }
 
-    // Create an interface USART2 with 115200 baudrate
-    // let mut config = embassy_rp::uart::Config::default();
-    // config.baudrate = 115200;
-    // let serial = embassy_rp::uart::Uart::new(
-    //     p.UART0, p.PA10, p.PA9, Irqs, p.DMA2_CH7, p.DMA2_CH2, config,
-    // )
-    // .unwrap();
+    // Create an interface USART1 with 56700 baudrate
+    // Connected on GPIO 28 (TX) and 29 (RX)
+    let mut config = embassy_rp::uart::Config::default();
+    config.baudrate = 57600;
+    let tx = p.PIN_28;
+    let rx = p.PIN_29;
+    static TX_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
+    let tx_buf = &mut TX_BUF.init([0; 1024])[..];
+    static RX_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
+    let rx_buf = &mut RX_BUF.init([0; 1024])[..];
+    let uart = BufferedUart::new(p.UART0, Irqs, tx, rx, tx_buf, rx_buf, config);
+    let (_tx, mut _rx) = uart.split();
 
-    // Pi Pico W UART0 with CTS/RTS
-    // UART0_TX = GP0, UART0_RX = GP1, UART0_CTS = GP2, UART0_RTS = GP3,
-    // let tx = p.PIN_0;
-    // let rx = p.PIN_1;
-    // let cts = p.PIN_2;
-    // let rts = p.PIN_3;
-
-    // let tx_buffer = TX_BUFFER.take();
-    // let rx_buffer = RX_BUFFER.take();
-
-    // let uart = BufferedUart::new_with_rtscts(
-    //     p.UART0,
-    //     Irqs,
-    //     tx,
-    //     rx,
-    //     rts,
-    //     cts,
-    //     tx_buffer,
-    //     rx_buffer,
-    //     Config::default(),
-    // );
-    // let (mut buf_tx, buf_rx) = uart.split();
-
-    // // Create our mavlink header and heartbeat message
+    // Create our mavlink header and heartbeat message
     // let header = mavlink::MavHeader {
     //     system_id: 1,
     //     component_id: 1,
@@ -148,64 +111,70 @@ async fn main(spawner: Spawner) {
     //     mavlink_version: 0x3,
     // };
 
-    // let mut led = Output::new(p.PIN_25, Level::Low);
-
-    loop {
-        info!("wait_for_high. Turn on LED");
-        // led.set_high();
-
-        // Timer::after_secs(2).await;
-
-        // log::info!("done wait_for_high. Turn off LED");
-        // led.set_low();
-
-        Timer::after_secs(2).await;
-    }
-
     // Spawn Rx loop
-    // unwrap!(spawner.spawn(mavlink_reader(buf_rx)));
     // spawner.spawn(rx_task(rx)).unwrap();
+    // spawner.spawn(tx_task(tx)).unwrap();
+    // spawner.spawn(hello_world()).unwrap();
+}
 
-    // info!("Sending MAVLink data...");
-    // loop {
-    //     // Write the raw heartbeat message to reduce firmware flash size (using Message::ser will be add ~70KB because
-    //     // all *_DATA::ser methods will be add to firmware).
-    //     let mut raw = MAVLinkV2MessageRaw::new();
-    //     raw.serialize_message_data(header, &heartbeat);
-    //     buf_tx.blocking_write(raw.raw_bytes()).unwrap();
-    //     Timer::after_secs(1).await;
-    // }
+#[embassy_executor::task]
+async fn hello_world() {
+    loop {
+        Timer::after_secs(1).await;
+        info!("Hello, world!");
+    }
+}
 
-    // Main loop
-    // loop {
-    //     // Write the raw heartbeat message to reduce firmware flash size (using Message::ser will be add ~70KB because
-    //     // all *_DATA::ser methods will be add to firmware).
-    //     let mut raw = MAVLinkV2MessageRaw::new();
-    //     raw.serialize_message_data(header, &heartbeat);
-    //     tx.write(raw.raw_bytes()).await.unwrap();
 
-    //     // Delay for 1 second
-    //     Timer::after_millis(1000).await;
-    // }
+// #[embassy_executor::task]
+// pub async fn tx_task(mut tx: BufferedUartTx<'static, UART0>) {
+//     let header = mavlink_header();
+//     let heartbeat = mavlink_heartbeat_message();
+//     info!("Sending heartbeat messages");
+//     loop {
+//         // Send a heartbeat message
+//         info!("Sending heartbeat message");
+//         // match mavlink::write_versioned_msg(&mut tx, mavlink::MavlinkVersion::V2, header, &heartbeat) {
+//         //     Ok(_) => info!("Sent heartbeat message"),
+//         //     Err(e) => info!("Error sending heartbeat message: {:?}", e),
+//         // }
+//         info!("Sent heartbeat message");
+//         Timer::after_secs(1).await;
+//     }
+// }
+
+// fn mavlink_header() -> mavlink::MavHeader {
+//     mavlink::MavHeader {
+//         system_id: 1,
+//         component_id: 1,
+//         sequence: 42,
+//     }
+// }
+
+pub fn mavlink_heartbeat_message() -> mavlink::common::MavMessage {
+    mavlink::common::MavMessage::HEARTBEAT(mavlink::common::HEARTBEAT_DATA {
+        custom_mode: 0,
+        mavtype: mavlink::common::MavType::MAV_TYPE_ROCKET,
+        autopilot: mavlink::common::MavAutopilot::MAV_AUTOPILOT_ARDUPILOTMEGA,
+        base_mode: mavlink::common::MavModeFlag::empty(),
+        system_status: mavlink::common::MavState::MAV_STATE_STANDBY,
+        mavlink_version: mavlink::MavlinkVersion::V2 as u8,
+    })
 }
 
 // #[embassy_executor::task]
-// pub async fn rx_task(rx: usart::UartRx<'static, Async>) {
-//     // Make ring-buffered RX (over DMA)
-//     static BUF_MEMORY: ConstStaticCell<[u8; 1024]> = ConstStaticCell::new([0; 1024]);
-//     let mut rx_buffered = rx.into_ring_buffered(BUF_MEMORY.take());
-
+// pub async fn rx_task(mut rx: BufferedUartRx<'static, UART0>) {
 //     loop {
 //         // Read raw message to reduce firmware flash size (using read_v2_msg_async will be add ~80KB because
 //         // all *_DATA::deser methods will be add to firmware).
-//         let raw = read_v2_raw_message_async::<MavMessage>(&mut rx_buffered)
+//         let raw = read_v2_raw_message_async::<MavMessage>(&mut rx)
 //             .await
 //             .unwrap();
-//         rprintln!("Read raw message: msg_id={}", raw.message_id());
+//         info!("Read raw message: msg_id={}", raw.message_id());
 
 //         if raw.message_id() == HEARTBEAT_DATA::ID {
 //             let heartbeat = HEARTBEAT_DATA::deser(MavlinkVersion::V2, raw.payload()).unwrap();
-//             rprintln!("heartbeat: {:?}", heartbeat);
+//             info!("heartbeat: {:?}", heartbeat);
 //         }
 //     }
 // }
@@ -216,19 +185,19 @@ async fn logger_task(driver: Driver<'static, USB>) {
     embassy_usb_logger::run!(1024, log::LevelFilter::Info, driver);
 }
 
-#[embassy_executor::task]
-async fn mavlink_reader(mut rx: BufferedUartRx<'static, UART0>) {
-    loop {
-        // Read raw message to reduce firmware flash size (using read_v2_msg_async will be add ~80KB because
-        // all *_DATA::deser methods will be add to firmware).
-        let raw = read_v2_raw_message_async::<MavMessage>(&mut rx)
-            .await
-            .unwrap();
-        info!("Read raw message: msg_id={}", raw.message_id());
+// #[embassy_executor::task]
+// async fn mavlink_reader(mut rx: BufferedUartRx<'static, UART0>) {
+//     loop {
+//         // Read raw message to reduce firmware flash size (using read_v2_msg_async will be add ~80KB because
+//         // all *_DATA::deser methods will be add to firmware).
+//         let raw = read_v2_raw_message_async::<MavMessage>(&mut rx)
+//             .await
+//             .unwrap();
+//         info!("Read raw message: msg_id={}", raw.message_id());
 
-        if raw.message_id() == HEARTBEAT_DATA::ID {
-            let heartbeat = HEARTBEAT_DATA::deser(MavlinkVersion::V2, raw.payload()).unwrap();
-            info!("heartbeat: {:?}", heartbeat);
-        }
-    }
-}
+//         if raw.message_id() == HEARTBEAT_DATA::ID {
+//             let heartbeat = HEARTBEAT_DATA::deser(MavlinkVersion::V2, raw.payload()).unwrap();
+//             info!("heartbeat: {:?}", heartbeat);
+//         }
+//     }
+// }

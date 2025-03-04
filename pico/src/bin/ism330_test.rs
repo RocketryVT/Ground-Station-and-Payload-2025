@@ -1,33 +1,59 @@
-#![no_main]
+// #![no_main]
 // #![no_std]
-#![cfg_attr(not(test), no_std)]
-#![deny(clippy::float_arithmetic)]
+// #![cfg_attr(not(test), no_std)]
+// #![deny(clippy::float_arithmetic)]
+
+#![no_main]
+#![no_std]
 
 use embassy_executor::Spawner;
+use embassy_rp::gpio::{Level, Output};
 use embassy_rp::i2c::{self, Async, I2c};
-use embassy_rp::{bind_interrupts, peripherals::*};
+use embassy_rp::spi::Spi;
+use embassy_rp::{bind_interrupts, peripherals::*, spi};
 use embassy_sync::blocking_mutex::raw::NoopRawMutex;
 use embassy_time::{Instant, Timer};
+use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use ism330dhcx::*;
 use static_cell::StaticCell;
 use LSM6DSO32::*;
-// use ADXL375::*;
+use ADXL375::{Adxl375, BandWidth as ADXL375BandWidth, PowerMode as ADXL375PowerMode};
 use bmp390::*;
 use embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice;
 use embassy_rp::usb::{Driver, InterruptHandler as UsbInterruptHandler};
 use embassy_sync::mutex::Mutex;
 use embassy_time::Delay;
+use embedded_sdmmc::{SdCard, TimeSource, Timestamp};
 
 use defmt_rtt as _;
 use log::info;
 use panic_probe as _;
 
 type I2c1Bus = Mutex<NoopRawMutex, I2c<'static, I2C1, i2c::Async>>;
+// type Spi0Bus = Mutex<NoopRawMutex, spi::Spi<'static, SPI0, spi::Blocking>>;
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => UsbInterruptHandler<USB>;
     I2C1_IRQ => embassy_rp::i2c::InterruptHandler<I2C1>;
 });
+
+#[derive(Default)]
+pub struct DummyTimesource();
+
+impl TimeSource for DummyTimesource {
+    // In theory you could use the RTC of the rp2040 here, if you had
+    // any external time synchronizing device.
+    fn get_timestamp(&self) -> Timestamp {
+        Timestamp {
+            year_since_1970: 0,
+            zero_indexed_month: 0,
+            zero_indexed_day: 0,
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+        }
+    }
+}
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
@@ -37,6 +63,35 @@ async fn main(spawner: Spawner) {
     info!("Setting up USB...");
     let usb_driver = Driver::new(p.USB, Irqs);
     spawner.spawn(logger_task(usb_driver)).unwrap();
+
+    // Setup SD Card
+    // let sd_card_detect = p.PIN_16;
+    let sd_clk = p.PIN_18;
+    let sd_mosi = p.PIN_19;
+    let sd_miso = p.PIN_20;
+    // let sd_dat1 = p.PIN_21;
+    // let sd_dat2 = p.PIN_22;
+    let sd_cs = Output::new(p.PIN_23, Level::High);
+    let mut sd_spi_config = embassy_rp::spi::Config::default();
+    // SPI clock needs to be running at <= 400kHz during initialization
+    sd_spi_config.frequency = 400_000;
+    let spi= embassy_rp::spi::Spi::new_blocking(
+        p.SPI0,
+        sd_clk,
+        sd_mosi,
+        sd_miso,
+        sd_spi_config
+    );
+    let spi_dev = ExclusiveDevice::new_no_delay(spi, sd_cs).unwrap();
+    let sd_card_options = embedded_sdmmc::sdcard::AcquireOpts {
+        use_crc: true,
+        acquire_retries: 50,
+    };
+    let sdcard = SdCard::new_with_options(spi_dev, Delay, sd_card_options);
+    let mut config = spi::Config::default();
+    config.frequency = 16_000_000;
+    sdcard.spi(|dev| dev.bus_mut().set_config(&config));
+    // Done setting up SD card
 
     info!("Setting up I2C...");
     let mut ic2_config = embassy_rp::i2c::Config::default();
@@ -50,9 +105,50 @@ async fn main(spawner: Spawner) {
     static I2C_BUS: StaticCell<I2c1Bus> = StaticCell::new();
     let i2c1_bus = I2C_BUS.init(Mutex::new(i2c1));
 
-    spawner.spawn(ism330dhcx_task(i2c1_bus)).unwrap();
-    spawner.spawn(lsm6dso32_task(i2c1_bus)).unwrap();
+    // spawner.spawn(ism330dhcx_task(i2c1_bus)).unwrap();
+    // spawner.spawn(lsm6dso32_task(i2c1_bus)).unwrap();
     spawner.spawn(bmp390_task(i2c1_bus)).unwrap();
+    // spawner.spawn(adxl375_task(i2c1_bus)).unwrap();
+    // spawner.spawn(write_sd(sdcard)).unwrap();
+   
+}
+
+
+#[embassy_executor::task]
+async fn write_sd(sdcard: SdCard<ExclusiveDevice<Spi<'static, SPI0, spi::Blocking>, Output<'static>, NoDelay>, Delay>) {
+    let start = Instant::now();
+    while start.elapsed().as_secs() < 5 {
+        info!("Waiting for SD card to be inserted...");
+        let _ = Timer::after_secs(1);
+    }
+    info!("Card size is {:?} bytes", sdcard.num_bytes());
+    let mut volume_mgr = embedded_sdmmc::VolumeManager::new(sdcard, DummyTimesource());
+    let mut volume0 = volume_mgr.open_volume(embedded_sdmmc::VolumeIdx(0)).unwrap();
+    info!("Volume 0: {:?}", defmt::Debug2Format(&volume0));
+    let mut root_dir = volume0.open_root_dir().unwrap();
+    let mut my_file = root_dir
+        .open_file_in_dir("MY_FILE.TXT", embedded_sdmmc::Mode::ReadWriteCreateOrAppend)
+        .unwrap();
+    // let data = b"Hello, SD card!";
+    // my_file.write(data).unwrap();
+    // my_file.flush().unwrap();
+    info!("Wrote data to file");
+    my_file.seek_from_start(0).unwrap();
+    let mut buf = [0u8; 16];
+    // while !my_file.is_eof() {
+    //     if let Ok(n) = my_file.read(&mut buf) {
+    //         info!("{:?}", &buf[..n]);
+    //     }
+    // }
+    my_file.read(&mut buf).unwrap();
+    loop {
+        if let Ok(text) = core::str::from_utf8(&buf) {
+            info!("Buffer: {}", text);
+        } else {
+            info!("Failed to convert buffer to text");
+        }
+        Timer::after_secs(5).await;
+    }
 }
 
 #[embassy_executor::task]
@@ -110,6 +206,49 @@ async fn bmp390_task(i2c_bus: &'static I2c1Bus) {
         }
 
         Timer::after_millis(5).await; // 5 milliseconds delay for 200 Hz
+    }
+}
+
+#[embassy_executor::task]
+async fn adxl375_task(i2c_bus: &'static I2c1Bus) {
+    let i2c_dev = I2cDevice::new(i2c_bus);
+
+    // loop {
+    //     info!("Setting up ADXL375...");
+    //     Timer::after_millis(500).await;
+    // }
+    // Set up ADXL375
+    let mut sensor = match Adxl375::try_new_with_address(i2c_dev, Delay, ADXL375::Address::Custom(0x53)).await {
+        Ok(sensor) => sensor,
+        Err(_) => {
+            loop {
+                info!("Error initializing ADXL375");
+                Timer::after_millis(1000).await;
+            }
+        }
+    };
+
+    match sensor.set_band_width(ADXL375BandWidth::Hz3200).await {
+        Ok(_) => {
+            // info!("Bandwidth set to 800 Hz");
+            // Timer::after_secs(1).await;
+        }
+        Err(_) => {
+            loop {
+                info!("Error setting bandwidth");
+                Timer::after_millis(1000).await;
+            }
+        }
+    }
+    sensor.set_power_mode(ADXL375PowerMode::Measurement).await.expect("Error setting power mode");
+    sensor.set_data_format().await.expect("Error setting data format");
+
+    loop {
+        let accel = sensor.read_acceleration().await.expect("Error reading acceleration");
+        info!("Acceleration: {:?}", accel);
+
+        // Timer::after_millis(5).await; // 5 milliseconds delay for 200 Hz
+        Timer::after_micros(313).await;
     }
 }
 
