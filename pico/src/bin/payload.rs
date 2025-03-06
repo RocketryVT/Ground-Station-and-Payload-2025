@@ -1,10 +1,7 @@
 #![no_main]
 #![no_std]
 #![allow(non_snake_case)]
-
-use byteorder::{ByteOrder, LittleEndian};
-use controls::madgwick::Ahrs;
-use embassy_rp::uart::{Blocking, BufferedInterruptHandler, BufferedUart, BufferedUartTx, DataBits, InterruptHandler, Parity, StopBits, Uart, UartTx};
+use embassy_rp::uart::{BufferedInterruptHandler, BufferedUartRx, BufferedUartTx, DataBits, InterruptHandler, Parity, StopBits, Uart, UartTx};
 // Rust 
 use static_cell::StaticCell;
 use core::f32::consts::SQRT_2;
@@ -16,7 +13,7 @@ use embassy_rp::gpio::{Level, Output};
 use embassy_rp::i2c::{self, Async, I2c};
 use embassy_rp::spi::Spi;
 use embassy_rp::{bind_interrupts, peripherals::*, spi};
-use embassy_rp::usb::{Driver, InterruptHandler as UsbInterruptHandler};
+// use embassy_rp::usb::{Driver, InterruptHandler as UsbInterruptHandler};
 
 use embassy_executor::Spawner;
 use embassy_sync::blocking_mutex::raw::NoopRawMutex;
@@ -28,7 +25,7 @@ use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
 use embassy_time::Delay;
 
 use chrono::{NaiveDate, TimeZone};
-use chrono_tz::America::{New_York, Recife};
+use chrono_tz::America::New_York;
 use ublox::{PacketRef, Parser};
 use mavlink::common::{MavAutopilot, MavMessage, MavModeFlag, MavState, MavType, GLOBAL_POSITION_INT_DATA, HEARTBEAT_DATA, UTM_GLOBAL_POSITION_DATA};
 use mavlink::{MavHeader, MavlinkVersion};
@@ -38,7 +35,7 @@ use UBLOX_rs;
 use LSM6DSO32::*;
 use ADXL375::{Adxl375, BandWidth as ADXL375BandWidth, PowerMode as ADXL375PowerMode};
 use bmp390::*;
-use controls::*;
+// use controls::*;
 
 use defmt_rtt as _;
 use log::info;
@@ -62,10 +59,10 @@ struct GpsData {
 static CHANNEL: Channel<ThreadModeRawMutex, GpsData, 8> = Channel::new();
 
 bind_interrupts!(struct Irqs {
-    USBCTRL_IRQ => UsbInterruptHandler<USB>;
+    // USBCTRL_IRQ => UsbInterruptHandler<USB>;
     I2C0_IRQ => embassy_rp::i2c::InterruptHandler<I2C0>;
     I2C1_IRQ => embassy_rp::i2c::InterruptHandler<I2C1>;
-    UART0_IRQ => InterruptHandler<UART0>;
+    UART0_IRQ => BufferedInterruptHandler<UART0>;
     UART1_IRQ => InterruptHandler<UART1>;
 });
 
@@ -92,9 +89,8 @@ async fn main(spawner: Spawner) {
     // Peripherals access
     let p = embassy_rp::init(Default::default());
 
-    info!("Setting up USB...");
-    let usb_driver = Driver::new(p.USB, Irqs);
-    spawner.spawn(logger_task(usb_driver)).unwrap();
+    // info!("Setting up USB...");
+    // let usb_driver = Driver::new(p.USB, Irqs);
 
     // let ahrs: madgwick::Madgwick<f32> = controls::madgwick::Madgwick::new((1/256) as f32, 0.1);
     // let quat = ahrs.update_imu(gyroscope, accelerometer).unwrap();
@@ -130,7 +126,7 @@ async fn main(spawner: Spawner) {
     // sdcard.spi(|dev| dev.bus_mut().set_config(&config));
     // Done setting up SD card
 
-    info!("Setting up I2C...");
+    // info!("Setting up I2C...");
     let mut ic2_config = embassy_rp::i2c::Config::default();
     ic2_config.frequency = 400_000;
 
@@ -176,10 +172,10 @@ async fn main(spawner: Spawner) {
     // let rfd_tx_buf = &mut RFD_TX_BUF.init([0; 1024])[..];
     // static RFD_RX_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
     // let rfd_rx_buf = &mut RFD_RX_BUF.init([0; 1024])[..];
-    // let rfd_tx_dma = p.DMA_CH2;
-    // let rfd_rx_dma = p.DMA_CH3;
-    // let rfd900x_uart = Uart::new_blocking(p.UART0, rfd900x_uart_tx, rfd900x_uart_rx, config);
-    // let (rfd_tx, mut _rfd_rx) = rfd900x_uart.split();
+    // // let rfd_tx_dma = p.DMA_CH2;
+    // // let rfd_rx_dma = p.DMA_CH3;
+    // let rfd900x_uart = BufferedUart::new(p.UART0, Irqs, rfd900x_uart_tx, rfd900x_uart_rx, rfd_tx_buf, rfd_rx_buf, config);
+    // let (rfd_tx, rfd_rx) = rfd900x_uart.split();
 
     
     // spawner.spawn(ism330dhcx_task(i2c1_bus)).unwrap(); //  Works
@@ -192,9 +188,11 @@ async fn main(spawner: Spawner) {
 
     spawner.spawn(lora_task(hel_tx, CHANNEL.receiver())).unwrap();
     // spawner.spawn(mavlink_send(rfd_tx, CHANNEL.receiver())).unwrap();
+    // spawner.spawn(mavlink_read(rfd_rx)).unwrap();
     // spawner.spawn(channel_test(CHANNEL.receiver())).unwrap();
 
     // spawner.spawn(write_sd(sdcard)).unwrap();
+    // spawner.spawn(logger_task(usb_driver)).unwrap();
    
 }
 
@@ -219,17 +217,17 @@ MavMessage::HEARTBEAT(HEARTBEAT_DATA {
 async fn channel_test(receiver: Receiver<'static, ThreadModeRawMutex, GpsData, 8>) {
     loop {
         let data = receiver.receive().await;
-        info!("Received data: {:?}", data);
+       // info!("Received data: {:?}", data);
     }
 }
 
 #[embassy_executor::task]
-async fn mavlink_send(mut tx:  UartTx<'static, UART0, embassy_rp::uart::Blocking>, receiver: Receiver<'static, ThreadModeRawMutex, GpsData, 8>) {
-    info!("Sending heartbeat messages");
+async fn mavlink_send(mut tx: BufferedUartTx<'static, UART0>, receiver: Receiver<'static, ThreadModeRawMutex, GpsData, 8>) {
+   // info!("Sending heartbeat messages");
     loop {
         let data = receiver.receive().await;
 
-        match mavlink::write_versioned_msg(&mut tx, mavlink::MavlinkVersion::V2, MAVLINK_HEADER, &MavMessage::GLOBAL_POSITION_INT(GLOBAL_POSITION_INT_DATA { 
+        mavlink::write_versioned_msg(&mut tx, mavlink::MavlinkVersion::V2, MAVLINK_HEADER, &MavMessage::GLOBAL_POSITION_INT(GLOBAL_POSITION_INT_DATA { 
             time_boot_ms: data.time as u32, 
             lat: data.lat as i32,
             lon: data.lon as i32, 
@@ -239,19 +237,28 @@ async fn mavlink_send(mut tx:  UartTx<'static, UART0, embassy_rp::uart::Blocking
             vy: 0,
             vz: 0,
             hdg: 0,
-        })) {
-            Ok(_) => info!("Sent heartbeat message"),
-            Err(e) => info!("Error sending heartbeat message: {:?}", e),
-        }
+        })).ok();
 
         // Send a heartbeat message
-        info!("Sending heartbeat message");
-        match mavlink::write_versioned_msg(&mut tx, mavlink::MavlinkVersion::V2, MAVLINK_HEADER, &MAVLINK_HEARTBEAT_MESSAGE) {
-            Ok(_) => info!("Sent heartbeat message"),
-            Err(e) => info!("Error sending heartbeat message: {:?}", e),
-        }
-        info!("Sent heartbeat message");
+       // info!("Sending heartbeat message");
+        mavlink::write_versioned_msg(&mut tx, mavlink::MavlinkVersion::V2, MAVLINK_HEADER, &MAVLINK_HEARTBEAT_MESSAGE).ok();
+       // info!("Sent heartbeat message");
         Timer::after_secs(1).await;
+        }
+}
+
+#[embassy_executor::task]
+async fn mavlink_read(rx: BufferedUartRx<'static, UART0>) {
+    let mut peek_reader = mavlink::peek_reader::PeekReader::new(rx);
+    loop {
+        match mavlink::read_v2_msg::<MavMessage, _>(&mut peek_reader) {
+            Ok(msg) => {
+               // info!("Received message: {:?}", msg);
+            }
+            Err(e) => {
+               // info!("Error parsing message: {:?}", e);
+            }
+        }
         }
 }
 
@@ -259,7 +266,7 @@ async fn mavlink_send(mut tx:  UartTx<'static, UART0, embassy_rp::uart::Blocking
 async fn lora_task(mut tx:  UartTx<'static, UART1, embassy_rp::uart::Async>, receiver: Receiver<'static, ThreadModeRawMutex, GpsData, 8>) {
     let mut buffer = [0u8; 47];
     loop {
-        info!("Payload");
+       // info!("Payload");
         let data = receiver.receive().await;
         let lat = data.lat;
         let lon = data.lon;
@@ -268,7 +275,7 @@ async fn lora_task(mut tx:  UartTx<'static, UART1, embassy_rp::uart::Async>, rec
         let num_satellites = data.num_satellites;
         let fix_type = data.fix_type;
         let time = data.time;
-        info!("Lora Task: {:?}", data);
+       // info!("Lora Task: {:?}", data);
 
         buffer[0] = b'$';
         buffer[1..9].copy_from_slice(&lat.to_le_bytes());
@@ -280,10 +287,10 @@ async fn lora_task(mut tx:  UartTx<'static, UART1, embassy_rp::uart::Async>, rec
         buffer[37..45].copy_from_slice(&time.to_le_bytes());
         buffer[45] = 0x0d; // Carriage return
         buffer[46] = 0x0a; // Line feed
-        info!("Sending data: {:?}", buffer);
+       // info!("Sending data: {:?}", buffer);
         tx.write(&buffer).await.expect("Failed to send data");
         tx.blocking_flush().expect("Failed to flush data");
-        info!("Data sent");
+       // info!("Data sent");
         Timer::after_secs(1).await;
     }
 }
@@ -320,7 +327,7 @@ async fn gps_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, ThreadModeR
     let fixed_buffer = FixedLinearBuffer::new(&mut data_buffer);
     let mut parser = Parser::new(fixed_buffer);
 
-    info!("Reading GPS data...");
+   // info!("Reading GPS data...");
 
     loop {
 
@@ -376,11 +383,11 @@ async fn gps_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, ThreadModeR
                     // info!("New York Time: {}", ny);
                 }
                 Some(Ok(packet)) => {
-                    info!("Packet: {:?}", packet);
+                   // info!("Packet: {:?}", packet);
                 }
                 Some(Err(e)) => {
                     // Received a malformed packet
-                    info!("Error: {:?}", e);
+                   // info!("Error: {:?}", e);
                 }
                 None => {
                     // The internal buffer is now empty
@@ -399,7 +406,7 @@ async fn gps_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, ThreadModeR
             time,
         };
 
-        info!("GPS Task: {:?}", gps_data);
+       // info!("GPS Task: {:?}", gps_data);
 
         sender.send(gps_data).await;
         // 250 ms is the minimal recommended delay between reading data on I2C, UART is 1100 ms.
@@ -534,10 +541,10 @@ async fn adxl375_task(i2c_bus: &'static I2c0Bus) {
 }
 
 // Async task for USB logging.
-#[embassy_executor::task]
-async fn logger_task(driver: Driver<'static, USB>) {
-    embassy_usb_logger::run!(1024, log::LevelFilter::Info, driver);
-}
+// #[embassy_executor::task]
+// async fn logger_task(driver: Driver<'static, USB>) {
+//     embassy_usb_logger::run!(1024, log::LevelFilter::Info, driver);
+// }
 
 #[embassy_executor::task]
 async fn ism330dhcx_task2(i2c_bus: &'static I2c0Bus) {

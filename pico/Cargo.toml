@@ -33,9 +33,6 @@ embedded-hal-bus = { version = "0.3", features = ["async"]}
 embedded-io-async = { version = "0.6", features = ["defmt-03"] }
 embedded-storage = { version = "0.3" }
 
-lora-modulation = {version = "0.1.5"}
-lora-phy = { version = "3.0" }
-
 mavlink = { version = "0.13", features = ["common", "embedded"], default-features = false}
 
 static_cell = { version = "2.1" }
