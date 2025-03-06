@@ -3,6 +3,7 @@
   import { Map } from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
   import { Deck } from 'deck.gl';
+  import {TerrainLayer} from '@deck.gl/geo-layers';
   import { MapView } from 'deck.gl';
   import { PathLayer } from 'deck.gl';
   import { writable } from 'svelte/store';
@@ -22,37 +23,50 @@
          */
           const latestCoordinate = coords[coords.length - 1];
           map.setCenter([latestCoordinate.longitude, latestCoordinate.latitude]);
-          deck.setProps({
-              layers: [
-                  new PathLayer({
-                      id: 'path-layer',
-                      data: [{ path: coords.map(coord => [coord.longitude, coord.latitude]) }],
-                      getWidth: 5,
-                      getColor: [255, 140, 0],
-                      widthMinPixels: 2
-                  })
-              ]
-          });
+        //   deck.setProps({
+        //       layers: [
+        //         //   new PathLayer({
+        //         //       id: 'path-layer',
+        //         //       data: [{ path: coords.map(coord => [coord.longitude, coord.latitude]) }],
+        //         //       getWidth: 5,
+        //         //       getColor: [255, 140, 0],
+        //         //       widthMinPixels: 2
+        //         //   })
+        //       ]
+        //   });
       }
   });
 
+const layer = new TerrainLayer({
+    elevationDecoder: {
+        rScaler: 2,
+        gScaler: 0,
+        bScaler: 0,
+        offset: 0
+    },
+    // Digital elevation model from https://www.usgs.gov/
+    elevationData: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/terrain.png',
+    texture: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/terrain-mask.png',
+    bounds: [-122.5233, 37.6493, -122.3566, 37.8159],
+});
+
   onMount(() => {
-      map = new Map({
-          container: 'map',
-          style: 'https://demotiles.maplibre.org/style.json',
-          center: [0, 0],
-          zoom: 2
-      });
+    //   map = new Map({
+    //       container: 'map',
+    //       style: 'https://demotiles.maplibre.org/style.json',
+    //       center: [0, 0],
+    //       zoom: 2
+    //   });
 
       deck = new Deck({
-          canvas: 'deck-canvas',
+        //   canvas: 'deck-canvas',
           initialViewState: {
-              longitude: 0,
-              latitude: 0,
-              zoom: 2
+            longitude: -122.4,
+            latitude: 37.74,
+            zoom: 11
           },
           controller: true,
-          layers: []
+          layers: [layer]
       });
 
       map.on('move', () => {

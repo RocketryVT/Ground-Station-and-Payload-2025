@@ -1,6 +1,7 @@
 {
   "version": "4",
   "specifiers": {
+    "npm:@deck.gl/geo-layers@^9.1.4": "9.1.4_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+extensions@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+mesh-layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
     "npm:@sveltejs/adapter-static@^3.0.6": "3.0.8_@sveltejs+kit@2.17.2__@sveltejs+vite-plugin-svelte@5.0.3___svelte@5.20.1____acorn@8.14.0___vite@6.1.0__svelte@5.20.1___acorn@8.14.0__vite@6.1.0_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.20.1___acorn@8.14.0__vite@6.1.0_svelte@5.20.1__acorn@8.14.0_vite@6.1.0",
     "npm:@sveltejs/kit@^2.9.0": "2.17.2_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.20.1___acorn@8.14.0__vite@6.1.0_svelte@5.20.1__acorn@8.14.0_vite@6.1.0",
     "npm:@sveltejs/vite-plugin-svelte@5": "5.0.3_svelte@5.20.1__acorn@8.14.0_vite@6.1.0",
@@ -87,7 +88,7 @@
         "@deck.gl/aggregation-layers",
         "@deck.gl/core",
         "@deck.gl/extensions",
-        "@deck.gl/geo-layers",
+        "@deck.gl/geo-layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+extensions@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+mesh-layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@deck.gl/layers",
         "@loaders.gl/compression",
         "@loaders.gl/core",
@@ -149,6 +150,34 @@
     },
     "@deck.gl/geo-layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+extensions@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+mesh-layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2": {
       "integrity": "sha512-rBM0fLgDjALbxooVz0APz5VrRw01CTXlrmQJsw8E1+sj8qJq8LvoMjSirsb1C2/YJLsLIEsdCh7hvFWC5oMEtg==",
+      "dependencies": [
+        "@deck.gl/core",
+        "@deck.gl/extensions",
+        "@deck.gl/layers",
+        "@deck.gl/mesh-layers",
+        "@loaders.gl/3d-tiles",
+        "@loaders.gl/core",
+        "@loaders.gl/gis",
+        "@loaders.gl/loader-utils",
+        "@loaders.gl/mvt",
+        "@loaders.gl/schema",
+        "@loaders.gl/terrain",
+        "@loaders.gl/tiles",
+        "@loaders.gl/wms",
+        "@luma.gl/core",
+        "@luma.gl/engine",
+        "@luma.gl/gltf",
+        "@luma.gl/shadertools",
+        "@math.gl/core",
+        "@math.gl/culling",
+        "@math.gl/web-mercator",
+        "@types/geojson",
+        "h3-js",
+        "long@3.2.0"
+      ]
+    },
+    "@deck.gl/geo-layers@9.1.4_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+extensions@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+mesh-layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2": {
+      "integrity": "sha512-rGecDEhBcRuqus8oMChhM8wFFuz44eu6yXJh/j5BCYXKz/9cnd1QF85hkHVH24lVtQuFSEqb1BEXzmFbFvtvFg==",
       "dependencies": [
         "@deck.gl/core",
         "@deck.gl/extensions",
@@ -1530,7 +1559,7 @@
         "@deck.gl/carto",
         "@deck.gl/core",
         "@deck.gl/extensions",
-        "@deck.gl/geo-layers",
+        "@deck.gl/geo-layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+extensions@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+mesh-layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@deck.gl/google-maps",
         "@deck.gl/json",
         "@deck.gl/layers",
@@ -2250,6 +2279,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@deck.gl/geo-layers@^9.1.4",
         "npm:@sveltejs/adapter-static@^3.0.6",
         "npm:@sveltejs/kit@^2.9.0",
         "npm:@sveltejs/vite-plugin-svelte@5",
