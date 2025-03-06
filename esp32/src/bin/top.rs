@@ -8,7 +8,7 @@ use embassy_sync::zerocopy_channel::{Channel, Sender};
 use embassy_time::Timer;
 
 use esp_hal::spi::{master::Config, master::Spi, Mode};
-use esp_hal::uart::{AtCmdConfig, UartRx, UartTx};
+use esp_hal::uart::{AtCmdConfig, Uart, UartRx, UartTx};
 use esp_hal::Async;
 use esp_hal::{time::RateExtU32, timer::timg::TimerGroup};
 
@@ -48,7 +48,7 @@ async fn main(spawner: Spawner) {
     println!("Init LoRa");
 
     let config = Config::default()
-        .with_frequency(400.kHz())
+        .with_frequency(10.MHz())
         .with_mode(Mode::_0);
     let spi2 = Spi::new(peripherals.SPI2, config)
         .unwrap()
@@ -148,7 +148,7 @@ async fn main(spawner: Spawner) {
         Err(err) => {
             loop {
                 println!("Error = {}", err);
-                Timer::after_secs(5).await;
+                Timer::after_secs(1).await;
             }
         }
     }
@@ -189,7 +189,7 @@ async fn main(spawner: Spawner) {
         //     Err(err) => println!("Sleep unsuccessful = {:?}", err),
         // }
 
-        Timer::after_secs(5).await;
+        Timer::after_secs(1).await;
     }
 }
 
@@ -228,84 +228,43 @@ pub async fn send_pico(mut tx: UartTx<'static, Async>) {
 
 #[embassy_executor::task]
 pub async fn read_pico(mut rx: UartRx<'static, Async>, mut sender: Sender<'static, NoopRawMutex, ChannelBuffer>) {
-    // Read data from pico over uart, then send over zero copy channel to the lora radio
-    let mut buffer = [0u8; 44]; // 1 byte for start '$', 44 bytes for data, 2 byte for stop '\r\n' CR LF
-    let mut index = 0;
-    let mut in_message = false;
-    let mut cr = false;
-    let mut lf = false;
-    loop {
+        const READ_BUF_SIZE: usize = 64;
+        const MAX_BUFFER_SIZE: usize = 10 * READ_BUF_SIZE + 16;
 
-        println!("Reading from Pico");
-        // Starts with '$' and ends with '\r\n'
-        // Message is 44 bytes long
-        let mut byte = [0u8; 1];
-        match rx.read_async(&mut byte).await {
-            Ok(_) => {
-                let byte = byte[0];
-                println!("Byte = {:?}", byte);
-                if byte == b'$' {
-                    println!("Start of message");
-                    in_message = true;
-                    index = 0;
-                    continue;
+        let mut rbuf: [u8; MAX_BUFFER_SIZE] = [0u8; MAX_BUFFER_SIZE];
+        let mut offset = 0;
+        loop {
+            let r = embedded_io_async::Read::read(&mut rx, &mut rbuf[offset..]).await;
+            match r {
+                Ok(len) => {
+                    offset += len;
+                    esp_println::println!("Read: {len}, data: {:?}", &rbuf[..offset]);
+                    offset = 0;
                 }
-                if in_message {
-                    buffer[index] = byte;
-                    index += 1;
-                }
-                if byte == 0x0d {
-                    cr = true;
-                }
-                if byte == 0x0a {
-                    lf = true;
-                }
-                if (cr && lf) || index == 44 {
-                    in_message = false;
-                    cr = false;
-                    lf = false;
-                    break;
-                }
+                Err(e) => esp_println::println!("RX Error: {:?}", e),
             }
-            Err(err) => {
-                println!("UART Read Error = {:?}", err);
-                Timer::after_secs(1).await;
-                continue;
-            }
+            // Data is 47 bytes, first byte is '$', last two byte is '/r/n'
+            let channel_buffer = sender.send().await;
+            // let mut buffer = [0u8; 44];
+            channel_buffer.copy_from_slice(&rbuf[1..45]);
+            esp_println::println!("Buffer = {:?}", channel_buffer);
+            let mut gpsdata= GpsData {
+                    lat: 0.0,
+                    lon: 0.0,
+                    alt: 0.0,
+                    alt_msl: 0.0,
+                    num_satellites: 0,
+                    fix_type: 0,
+                    time: 0,
+                };
+                gpsdata.lat = f64::from_le_bytes(channel_buffer[0..8].try_into().expect("Failed to convert"));
+                gpsdata.lon = f64::from_le_bytes(channel_buffer[8..16].try_into().expect("Failed to convert"));
+                gpsdata.alt = f64::from_le_bytes(channel_buffer[16..24].try_into().expect("Failed to convert"));
+                gpsdata.alt_msl = f64::from_le_bytes(channel_buffer[24..32].try_into().expect("Failed to convert"));
+                gpsdata.num_satellites = u16::from_le_bytes(channel_buffer[32..34].try_into().expect("Failed to convert"));
+                gpsdata.fix_type = u16::from_le_bytes(channel_buffer[34..36].try_into().expect("Failed to convert"));
+                gpsdata.time = i64::from_le_bytes(channel_buffer[36..44].try_into().expect("Failed to convert"));
+                println!("GPS Data = {:?}", gpsdata);
+                sender.send_done();
         }
-        rx.check_for_errors().expect("UART Error");
-
-        if index == buffer.len() {
-            println!("Buffer overflow, resetting buffer");
-            index = 0;
-            in_message = false;
-            continue;
-        }
-
-        println!("UART data received, size: {}", index);
-        println!("Received data: {:?}", &buffer);
-        let channel_buffer = sender.send().await;
-        channel_buffer.copy_from_slice(&buffer);
-        let mut gpsdata= GpsData {
-            lat: 0.0,
-            lon: 0.0,
-            alt: 0.0,
-            alt_msl: 0.0,
-            num_satellites: 0,
-            fix_type: 0,
-            time: 0,
-        };
-        gpsdata.lat = f64::from_le_bytes(channel_buffer[0..8].try_into().expect("Failed to convert"));
-        gpsdata.lon = f64::from_le_bytes(channel_buffer[8..16].try_into().expect("Failed to convert"));
-        gpsdata.alt = f64::from_le_bytes(channel_buffer[16..24].try_into().expect("Failed to convert"));
-        gpsdata.alt_msl = f64::from_le_bytes(channel_buffer[24..32].try_into().expect("Failed to convert"));
-        gpsdata.num_satellites = u16::from_le_bytes(channel_buffer[32..34].try_into().expect("Failed to convert"));
-        gpsdata.fix_type = u16::from_le_bytes(channel_buffer[34..36].try_into().expect("Failed to convert"));
-        gpsdata.time = i64::from_le_bytes(channel_buffer[36..44].try_into().expect("Failed to convert"));
-        println!("GPS Data = {:?}", gpsdata);
-
-        sender.send_done();
-
-        Timer::after_millis(500).await;
-    }
 }

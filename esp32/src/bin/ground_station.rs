@@ -56,7 +56,7 @@ async fn main(_spawner: Spawner) {
     println!("Init LoRa");
 
     let config = Config::default()
-        .with_frequency(100.kHz())
+        .with_frequency(10.MHz())
         .with_mode(Mode::_0);
     let spi2 = Spi::new(peripherals.SPI2, config)
         .unwrap()
@@ -137,8 +137,9 @@ async fn main(_spawner: Spawner) {
             Ok((received_len, _rx_pkt_status)) => {
                 let received_data = &receiving_buffer[..received_len as usize];
                 println!("{:?}", received_data);
+                println!("Received data length: {}", received_len);
 
-                if received_len >= 48 {
+                if received_len >= 44 {
                     let gps_data = GpsData {
                         lat: LittleEndian::read_f64(&received_data[0..8]),
                         lon: LittleEndian::read_f64(&received_data[8..16]),
