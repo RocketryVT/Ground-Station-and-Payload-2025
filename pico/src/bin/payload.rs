@@ -1,7 +1,7 @@
 #![no_main]
 #![no_std]
 #![allow(non_snake_case)]
-use embassy_rp::uart::{BufferedInterruptHandler, BufferedUartRx, BufferedUartTx, DataBits, InterruptHandler, Parity, StopBits, Uart, UartTx};
+use embassy_rp::uart::{BufferedInterruptHandler, BufferedUart, BufferedUartRx, BufferedUartTx, DataBits, InterruptHandler, Parity, StopBits, Uart, UartTx};
 // Rust 
 use static_cell::StaticCell;
 use core::f32::consts::SQRT_2;
@@ -166,16 +166,16 @@ async fn main(spawner: Spawner) {
 
 
     // RFD900x UART 0
-    // let rfd900x_uart_tx = p.PIN_28;
-    // let rfd900x_uart_rx = p.PIN_29;
-    // static RFD_TX_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
-    // let rfd_tx_buf = &mut RFD_TX_BUF.init([0; 1024])[..];
-    // static RFD_RX_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
-    // let rfd_rx_buf = &mut RFD_RX_BUF.init([0; 1024])[..];
-    // // let rfd_tx_dma = p.DMA_CH2;
-    // // let rfd_rx_dma = p.DMA_CH3;
-    // let rfd900x_uart = BufferedUart::new(p.UART0, Irqs, rfd900x_uart_tx, rfd900x_uart_rx, rfd_tx_buf, rfd_rx_buf, config);
-    // let (rfd_tx, rfd_rx) = rfd900x_uart.split();
+    let rfd900x_uart_tx = p.PIN_28;
+    let rfd900x_uart_rx = p.PIN_29;
+    static RFD_TX_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
+    let rfd_tx_buf = &mut RFD_TX_BUF.init([0; 1024])[..];
+    static RFD_RX_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
+    let rfd_rx_buf = &mut RFD_RX_BUF.init([0; 1024])[..];
+    // let rfd_tx_dma = p.DMA_CH2;
+    // let rfd_rx_dma = p.DMA_CH3;
+    let rfd900x_uart = BufferedUart::new(p.UART0, Irqs, rfd900x_uart_tx, rfd900x_uart_rx, rfd_tx_buf, rfd_rx_buf, config);
+    let (rfd_tx, rfd_rx) = rfd900x_uart.split();
 
     
     // spawner.spawn(ism330dhcx_task(i2c1_bus)).unwrap(); //  Works
@@ -186,8 +186,8 @@ async fn main(spawner: Spawner) {
     // spawner.spawn(adxl375_task(i2c0_bus)).unwrap();
     // spawner.spawn(ism330dhcx_task2(i2c0_bus)).unwrap();
 
-    spawner.spawn(lora_task(hel_tx, CHANNEL.receiver())).unwrap();
-    // spawner.spawn(mavlink_send(rfd_tx, CHANNEL.receiver())).unwrap();
+    // spawner.spawn(lora_task(hel_tx, CHANNEL.receiver())).unwrap();
+    spawner.spawn(mavlink_send(rfd_tx, CHANNEL.receiver())).unwrap();
     // spawner.spawn(mavlink_read(rfd_rx)).unwrap();
     // spawner.spawn(channel_test(CHANNEL.receiver())).unwrap();
 
