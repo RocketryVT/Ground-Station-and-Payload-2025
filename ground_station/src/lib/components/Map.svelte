@@ -1,109 +1,169 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { Map } from 'maplibre-gl';
-  import 'maplibre-gl/dist/maplibre-gl.css';
-  import { Deck } from 'deck.gl';
-  import {TerrainLayer} from '@deck.gl/geo-layers';
-  import { MapView } from 'deck.gl';
-  import { PathLayer } from 'deck.gl';
+  import { Deck, MapView} from 'deck.gl';
+  import { TerrainLayer } from '@deck.gl/geo-layers';
+  import { TileLayer } from '@deck.gl/geo-layers';
+  // import { OrbitView } from '@deck.gl/core';
+  import { BitmapLayer } from '@deck.gl/layers';
+  import { ScenegraphLayer } from '@deck.gl/mesh-layers';
   import { writable } from 'svelte/store';
+
 
   // Store for GPS coordinates
   export let gpsCoordinates = writable([]);
+  export let rocketAltitude = writable(0);
 
-  /** @type {import('maplibre-gl').Map} */
-  let map: Map;
-  /** @type {import('deck.gl').Deck} */
-  let deck: Deck;
+  // /** @type {import('maplibre-gl').Map} */
+  // let map: Map;
+  /** @type {import('deck.gl').Deck<MapView>} */
+  let deck: Deck<MapView>;
 
-  $: gpsCoordinates.subscribe((coords: { longitude: number; latitude: number; }[]) => {
+  const initialCoordinate = { longitude: -122.20, latitude: 46.20, altitude: 0 };
+
+  $: gpsCoordinates.subscribe((coords: {altitude: number; longitude: number; latitude: number; }[]) => {
       if (coords.length > 0) {
-          /**
-         * @type {{ longitude: number; latitude: number; }}
-         */
           const latestCoordinate = coords[coords.length - 1];
-          map.setCenter([latestCoordinate.longitude, latestCoordinate.latitude]);
-        //   deck.setProps({
-        //       layers: [
-        //         //   new PathLayer({
-        //         //       id: 'path-layer',
-        //         //       data: [{ path: coords.map(coord => [coord.longitude, coord.latitude]) }],
-        //         //       getWidth: 5,
-        //         //       getColor: [255, 140, 0],
-        //         //       widthMinPixels: 2
-        //         //   })
-        //       ]
-        //   });
+          rocketAltitude.update(altitude => latestCoordinate.altitude || altitude);
+          deck.setProps({
+              viewState: {
+                  longitude: latestCoordinate.longitude,
+                  latitude: latestCoordinate.latitude,
+                  zoom: 11.5,
+                  bearing: 140,
+                  pitch: 60
+              },
+              layers: [
+                  ...deck.props.layers,
+                  new ScenegraphLayer({
+                      id: 'rocket-layer',
+                      data: [{ ...latestCoordinate, altitude: $rocketAltitude }],
+                      pickable: true,
+                      scenegraph: '/models/rocket-model/Rocket.glb',
+                      getPosition: (d: { longitude: any; latitude: any; altitude: any }) => [d.longitude, d.latitude, d.altitude],
+                      getOrientation: [0, 0, 0+90],
+                      sizeScale: 10
+                  })
+              ]
+          });
       }
   });
 
-const layer = new TerrainLayer({
-    elevationDecoder: {
-        rScaler: 2,
-        gScaler: 0,
-        bScaler: 0,
-        offset: 0
-    },
-    // Digital elevation model from https://www.usgs.gov/
-    elevationData: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/terrain.png',
-    texture: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/terrain-mask.png',
-    bounds: [-122.5233, 37.6493, -122.3566, 37.8159],
-});
+onMount(() => {
+      const key = 'AZogTcU2i1A2d5jt4cJx';
 
-  onMount(() => {
-    //   map = new Map({
-    //       container: 'map',
-    //       style: 'https://demotiles.maplibre.org/style.json',
-    //       center: [0, 0],
-    //       zoom: 2
-    //   });
+      const TERRAIN_IMAGE = `https://api.maptiler.com/tiles/terrain-rgb-v2/{z}/{x}/{y}.webp?key=${key}`;
+      const SURFACE_IMAGE = `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${key}`;
+
+      const ELEVATION_DECODER = {
+        rScaler: 6553.6,
+        gScaler: 25.6,
+        bScaler: 0.1,
+        offset: -10000
+      };
+
+      const osmTileLayer = new TileLayer({
+          id: 'osm-tile-layer',
+          data: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          minZoom: 0,
+          maxZoom: 19,
+          tileSize: 256,
+          maxRequests: 20,
+          maxCacheSize: 1000,
+          renderSubLayers: props => {
+            const {boundingBox} = props.tile;
+
+            return new BitmapLayer(props, {
+              data: undefined,
+              image: props.data,
+              bounds: [boundingBox[0][0], boundingBox[0][1], boundingBox[1][0], boundingBox[1][1]]
+            });
+          },
+      });
+
+      const terrainLayer = new TerrainLayer({
+          id: 'terrain',
+          minZoom: 0,
+          maxZoom: 12,
+          elevationDecoder: ELEVATION_DECODER,
+          elevationData: TERRAIN_IMAGE,
+          texture: SURFACE_IMAGE,
+          wireframe: false,
+          color: [255, 255, 255],
+          maxCacheSize: 1000,
+      });
+
+      const rocketLayer = new ScenegraphLayer({
+          id: 'rocket-layer',
+          data: [initialCoordinate],
+          pickable: true,
+          scenegraph: '/models/rocket-model/Rocket.glb',
+          getPosition: (d: { longitude: any; latitude: any; altitude: any}) => [d.longitude, d.latitude, d.altitude],
+          getOrientation: [0, 0, 90],
+          sizeScale: 10
+      });
 
       deck = new Deck({
-        //   canvas: 'deck-canvas',
+          canvas: 'deck-canvas',
           initialViewState: {
-            longitude: -122.4,
-            latitude: 37.74,
-            zoom: 11
+            latitude: 46.20,
+            longitude: -122.20,
+            zoom: 11.5,
+            bearing: 140,
+            pitch: 60,
+            maxPitch: 89
           },
+          useDevicePixels: false,
           controller: true,
-          layers: [layer]
+          layers: [osmTileLayer, terrainLayer, rocketLayer],
+          views: new MapView({repeat: false}),
+          // layers: [rocketLayer],
       });
 
-      map.on('move', () => {
-          const { lng, lat } = map.getCenter();
+      const interval = setInterval(() => {
+          rocketAltitude.update(altitude => altitude + 1);
           deck.setProps({
-              viewState: {
-                  longitude: lng,
-                  latitude: lat,
-                  zoom: map.getZoom(),
-                  bearing: map.getBearing(),
-                  pitch: map.getPitch()
-              }
+            //   viewState: {
+            //       longitude: initialCoordinate.longitude,
+            //       latitude: initialCoordinate.latitude,
+            //       zoom: 15,
+            //       bearing: 140,
+            //       pitch: 60
+            //   },
+              layers: [
+                    ...deck.props.layers.filter(layer => layer.id !== 'rocket-layer'),
+                  new ScenegraphLayer({
+                      id: 'rocket-layer',
+                      data: [{ ...initialCoordinate, altitude: $rocketAltitude }],
+                      pickable: true,
+                      scenegraph: '/models/rocket-model/Rocket.glb',
+                      getPosition: (d: { longitude: any; latitude: any; altitude: any }) => [d.longitude, d.latitude, d.altitude],
+                      getOrientation: [0, 0, 0+90],
+                      sizeScale: 10
+                  })
+              ]
           });
-      });
-  });
+      }, 10);
+});  
 
-  onDestroy(() => {
-      if (map) map.remove();
+onDestroy(() => {
       if (deck) deck.finalize();
-  });
+});
+
 </script>
 
 <style>
-  #map {
+  .map-container {
+      position: relative;
       width: 100%;
       height: 100%;
   }
-
   #deck-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
+      position: relative;
       width: 100%;
       height: 100%;
-      pointer-events: none;
   }
 </style>
 
-<div id="map"></div>
-<canvas id="deck-canvas"></canvas>
+<div class="map-container">
+  <canvas id="deck-canvas"></canvas>
+</div>

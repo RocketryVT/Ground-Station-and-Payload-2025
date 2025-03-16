@@ -1,7 +1,13 @@
 {
   "version": "4",
   "specifiers": {
+    "npm:@deck.gl/core@^9.1.4": "9.1.4_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
     "npm:@deck.gl/geo-layers@^9.1.4": "9.1.4_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+extensions@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+mesh-layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+    "npm:@deck.gl/layers@^9.1.4": "9.1.4_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+    "npm:@deck.gl/mesh-layers@^9.1.4": "9.1.4_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+    "npm:@loaders.gl/core@^4.3.3": "4.3.3",
+    "npm:@loaders.gl/geotiff@^4.3.3": "4.3.3_@loaders.gl+core@4.3.3",
+    "npm:@luma.gl/experimental@^8.5.21": "8.5.21_@loaders.gl+gltf@3.4.15_@loaders.gl+images@3.4.15_@luma.gl+engine@8.5.21_@luma.gl+gltools@8.5.21_@luma.gl+shadertools@8.5.21_@luma.gl+webgl@8.5.21",
     "npm:@sveltejs/adapter-static@^3.0.6": "3.0.8_@sveltejs+kit@2.17.2__@sveltejs+vite-plugin-svelte@5.0.3___svelte@5.20.1____acorn@8.14.0___vite@6.1.0__svelte@5.20.1___acorn@8.14.0__vite@6.1.0_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.20.1___acorn@8.14.0__vite@6.1.0_svelte@5.20.1__acorn@8.14.0_vite@6.1.0",
     "npm:@sveltejs/kit@^2.9.0": "2.17.2_@sveltejs+vite-plugin-svelte@5.0.3__svelte@5.20.1___acorn@8.14.0__vite@6.1.0_svelte@5.20.1__acorn@8.14.0_vite@6.1.0",
     "npm:@sveltejs/vite-plugin-svelte@5": "5.0.3_svelte@5.20.1__acorn@8.14.0_vite@6.1.0",
@@ -44,6 +50,12 @@
         "sortablejs@1.15.6"
       ]
     },
+    "@babel/runtime@7.26.9": {
+      "integrity": "sha512-aA63XwOkcl4xxQa3HjPMqOP6LiK0ZDv3mUPYEFXkpHbaFjtGggE1A61FjFzJnB+p7/oy2gA8E+rcBNl/zC1tMg==",
+      "dependencies": [
+        "regenerator-runtime"
+      ]
+    },
     "@carto/api-client@0.4.6": {
       "integrity": "sha512-oj21OIK3UOVUiRjEJ0+j265PquOClGTNfdWRWiTLV+XHq6ih1A1xlQ4HaVWs3HpIV21YF/wW6CXRLHzCBRTctQ==",
       "dependencies": [
@@ -58,13 +70,13 @@
     "@deck.gl/aggregation-layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2": {
       "integrity": "sha512-L/F5SuZjeW14TW1eAUMNEG1Fyyy37WW9pTYkA8G5xeLIz9/GR6Ldcj9hE29XuNOx+HgT7A0Ta4MaMcz9LHO2ww==",
       "dependencies": [
-        "@deck.gl/core",
-        "@deck.gl/layers",
-        "@luma.gl/constants",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@deck.gl/layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/constants@9.1.2",
         "@luma.gl/core",
-        "@luma.gl/engine",
-        "@luma.gl/shadertools",
-        "@math.gl/core",
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2",
+        "@math.gl/core@4.1.0",
         "@math.gl/web-mercator",
         "d3-hexbin"
       ]
@@ -73,11 +85,11 @@
       "integrity": "sha512-0gVFF6AuVmb0M9vQhFpvRRswBOqN7iHXFKjMEgIK+qQ+a+obLjS8+qXSs7JY4GsUkxrzCbLfvaRMYfX5LUWMjw==",
       "dependencies": [
         "@arcgis/core",
-        "@deck.gl/core",
-        "@luma.gl/constants",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/constants@9.1.2",
         "@luma.gl/core",
-        "@luma.gl/engine",
-        "@luma.gl/webgl",
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/webgl@9.1.2_@luma.gl+core@9.1.2",
         "esri-loader"
       ]
     },
@@ -86,19 +98,19 @@
       "dependencies": [
         "@carto/api-client",
         "@deck.gl/aggregation-layers",
-        "@deck.gl/core",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@deck.gl/extensions",
         "@deck.gl/geo-layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+extensions@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+mesh-layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
-        "@deck.gl/layers",
+        "@deck.gl/layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@loaders.gl/compression",
         "@loaders.gl/core",
         "@loaders.gl/gis",
-        "@loaders.gl/loader-utils",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
         "@loaders.gl/mvt",
-        "@loaders.gl/schema",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
         "@loaders.gl/tiles",
         "@luma.gl/core",
-        "@luma.gl/shadertools",
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2",
         "@math.gl/web-mercator",
         "@types/d3-array",
         "@types/d3-color",
@@ -119,19 +131,41 @@
       "integrity": "sha512-Ophj9qdGY0T0WYtBYBgD5cuyGoxosSuznJWfaFsGn+WALfQriqb91epCT1wuwsrQ9l2YpVjhOHr6iEui1VBpOw==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/images",
-        "@luma.gl/constants",
+        "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3",
+        "@luma.gl/constants@9.1.2",
         "@luma.gl/core",
-        "@luma.gl/engine",
-        "@luma.gl/shadertools",
-        "@luma.gl/webgl",
-        "@math.gl/core",
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2",
+        "@luma.gl/webgl@9.1.2_@luma.gl+core@9.1.2",
+        "@math.gl/core@4.1.0",
         "@math.gl/sun",
-        "@math.gl/types",
+        "@math.gl/types@4.1.0",
         "@math.gl/web-mercator",
-        "@probe.gl/env",
-        "@probe.gl/log",
-        "@probe.gl/stats",
+        "@probe.gl/env@4.1.0",
+        "@probe.gl/log@4.1.0",
+        "@probe.gl/stats@4.1.0",
+        "@types/offscreencanvas",
+        "gl-matrix",
+        "mjolnir.js"
+      ]
+    },
+    "@deck.gl/core@9.1.4_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2": {
+      "integrity": "sha512-WFDc0+yOWlBiQhbHwCall40btSLQUFmyQjLskHnn1LymNz3Ot4kjfBG4hG9nIX/0G+PvrTUQCBxmkNkZK1kDMA==",
+      "dependencies": [
+        "@loaders.gl/core",
+        "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3",
+        "@luma.gl/constants@9.1.2",
+        "@luma.gl/core",
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2",
+        "@luma.gl/webgl@9.1.2_@luma.gl+core@9.1.2",
+        "@math.gl/core@4.1.0",
+        "@math.gl/sun",
+        "@math.gl/types@4.1.0",
+        "@math.gl/web-mercator",
+        "@probe.gl/env@4.1.0",
+        "@probe.gl/log@4.1.0",
+        "@probe.gl/stats@4.1.0",
         "@types/offscreencanvas",
         "gl-matrix",
         "mjolnir.js"
@@ -140,35 +174,35 @@
     "@deck.gl/extensions@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2": {
       "integrity": "sha512-JOFFofHC8JNHbytFZ+wbJ6jIJ/dp0tUtlJ0ND86kcoiw4hR+evXHSDkg61n4UJNkRQW+OS9qGYemSa00Un0gOg==",
       "dependencies": [
-        "@deck.gl/core",
-        "@luma.gl/constants",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/constants@9.1.2",
         "@luma.gl/core",
-        "@luma.gl/engine",
-        "@luma.gl/shadertools",
-        "@math.gl/core"
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2",
+        "@math.gl/core@4.1.0"
       ]
     },
     "@deck.gl/geo-layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+extensions@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+mesh-layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2": {
       "integrity": "sha512-rBM0fLgDjALbxooVz0APz5VrRw01CTXlrmQJsw8E1+sj8qJq8LvoMjSirsb1C2/YJLsLIEsdCh7hvFWC5oMEtg==",
       "dependencies": [
-        "@deck.gl/core",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@deck.gl/extensions",
-        "@deck.gl/layers",
-        "@deck.gl/mesh-layers",
+        "@deck.gl/layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@deck.gl/mesh-layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@loaders.gl/3d-tiles",
         "@loaders.gl/core",
         "@loaders.gl/gis",
-        "@loaders.gl/loader-utils",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
         "@loaders.gl/mvt",
-        "@loaders.gl/schema",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
         "@loaders.gl/terrain",
         "@loaders.gl/tiles",
         "@loaders.gl/wms",
         "@luma.gl/core",
-        "@luma.gl/engine",
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@luma.gl/gltf",
-        "@luma.gl/shadertools",
-        "@math.gl/core",
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2",
+        "@math.gl/core@4.1.0",
         "@math.gl/culling",
         "@math.gl/web-mercator",
         "@types/geojson",
@@ -179,24 +213,24 @@
     "@deck.gl/geo-layers@9.1.4_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+extensions@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+mesh-layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2": {
       "integrity": "sha512-rGecDEhBcRuqus8oMChhM8wFFuz44eu6yXJh/j5BCYXKz/9cnd1QF85hkHVH24lVtQuFSEqb1BEXzmFbFvtvFg==",
       "dependencies": [
-        "@deck.gl/core",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@deck.gl/extensions",
-        "@deck.gl/layers",
-        "@deck.gl/mesh-layers",
+        "@deck.gl/layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@deck.gl/mesh-layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@loaders.gl/3d-tiles",
         "@loaders.gl/core",
         "@loaders.gl/gis",
-        "@loaders.gl/loader-utils",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
         "@loaders.gl/mvt",
-        "@loaders.gl/schema",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
         "@loaders.gl/terrain",
         "@loaders.gl/tiles",
         "@loaders.gl/wms",
         "@luma.gl/core",
-        "@luma.gl/engine",
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@luma.gl/gltf",
-        "@luma.gl/shadertools",
-        "@math.gl/core",
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2",
+        "@math.gl/core@4.1.0",
         "@math.gl/culling",
         "@math.gl/web-mercator",
         "@types/geojson",
@@ -207,33 +241,50 @@
     "@deck.gl/google-maps@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+core@9.1.2_@luma.gl+webgl@9.1.2__@luma.gl+core@9.1.2": {
       "integrity": "sha512-B4kdi7WxwWHtLOD/k5ZrkcMcCAIAg09OQHhnA716gjAtzIKcGqtuw/aeJoCeNZcaWfFP03Nj8poDqPM9IZioKg==",
       "dependencies": [
-        "@deck.gl/core",
-        "@luma.gl/constants",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/constants@9.1.2",
         "@luma.gl/core",
-        "@luma.gl/webgl",
-        "@math.gl/core",
+        "@luma.gl/webgl@9.1.2_@luma.gl+core@9.1.2",
+        "@math.gl/core@4.1.0",
         "@types/google.maps"
       ]
     },
     "@deck.gl/json@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2": {
       "integrity": "sha512-Ihj6WRk0os0HDQweylprDaqPBpCKZi7QTgK8q0j0pOavSVci0/g7L7U5RsuovWzeT6gdiwNNwt39kxRD20rupw==",
       "dependencies": [
-        "@deck.gl/core",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "jsep"
       ]
     },
     "@deck.gl/layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2": {
       "integrity": "sha512-BrwfhfX9xWdmD7nTKati+pXzBrUQ4b4zAVvsL9dvCTPAvrJsEX9UWiYDdfq1kAHef6o4ExgupfYZrs/nP1wxqQ==",
       "dependencies": [
-        "@deck.gl/core",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@loaders.gl/core",
-        "@loaders.gl/images",
-        "@loaders.gl/schema",
+        "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
         "@luma.gl/core",
-        "@luma.gl/engine",
-        "@luma.gl/shadertools",
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2",
         "@mapbox/tiny-sdf",
-        "@math.gl/core",
+        "@math.gl/core@4.1.0",
+        "@math.gl/polygon",
+        "@math.gl/web-mercator",
+        "earcut@2.2.4"
+      ]
+    },
+    "@deck.gl/layers@9.1.4_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2": {
+      "integrity": "sha512-MZZHuxMKy9b/gVh6UNZONPYhHyuvAhG6Rq1viSU44Dceto+U7tybdsZCMQZMGyK2cLz2wm95i8u7BOTYcoGt/A==",
+      "dependencies": [
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@loaders.gl/core",
+        "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
+        "@luma.gl/core",
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2",
+        "@mapbox/tiny-sdf",
+        "@math.gl/core@4.1.0",
         "@math.gl/polygon",
         "@math.gl/web-mercator",
         "earcut@2.2.4"
@@ -242,8 +293,8 @@
     "@deck.gl/mapbox@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+core@9.1.2": {
       "integrity": "sha512-1e783Slznlvh4pYB3fOwHQrS/MtTAmGlIhcr1kM3NC+8WW0O+avxhDolSxY8I0IjojwVybS/vnz79+QIuu0oTw==",
       "dependencies": [
-        "@deck.gl/core",
-        "@luma.gl/constants",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/constants@9.1.2",
         "@luma.gl/core",
         "@math.gl/web-mercator"
       ]
@@ -251,18 +302,29 @@
     "@deck.gl/mesh-layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2": {
       "integrity": "sha512-943xvJJBErhOzc8ZirpbmIUL8wdAq0N8e2bire1uR6h+fwhqxgg9GBo8fhx9Hnf2DMtwsx1savDlgx10JOkn8w==",
       "dependencies": [
-        "@deck.gl/core",
-        "@loaders.gl/gltf",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@loaders.gl/gltf@4.3.3_@loaders.gl+core@4.3.3",
         "@luma.gl/core",
-        "@luma.gl/engine",
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@luma.gl/gltf",
-        "@luma.gl/shadertools"
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2"
+      ]
+    },
+    "@deck.gl/mesh-layers@9.1.4_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2": {
+      "integrity": "sha512-yryR7Caqbj2qzqDchhmzp0JIPHfyJBtWj5L8Ve7JOBTGKFYVvnQm5FihsDT7+TeBQpeyREExen8AxARNG7U5Ug==",
+      "dependencies": [
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@loaders.gl/gltf@4.3.3_@loaders.gl+core@4.3.3",
+        "@luma.gl/core",
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/gltf",
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2"
       ]
     },
     "@deck.gl/react@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+widgets@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2_react@19.0.0_react-dom@19.0.0__react@19.0.0": {
       "integrity": "sha512-Jp6c94Pt2woOUVP0GecZbwomoNvjye7xxbYgIRLUubRurPHWMWuXdfGwlup9I9C8+U1EuK1YSQuiFa/OJqUxqQ==",
       "dependencies": [
-        "@deck.gl/core",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@deck.gl/widgets",
         "react",
         "react-dom"
@@ -271,7 +333,7 @@
     "@deck.gl/widgets@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2": {
       "integrity": "sha512-DlLi1uO7cSdM2XfjCceytZ1FROZF+Xoig4STjbLxxfXqifOjvJGyPb/ehcHgrRiB3i3yRiMbEo8D/wOZm+vqSg==",
       "dependencies": [
-        "@deck.gl/core",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "preact"
       ]
     },
@@ -439,17 +501,17 @@
         "@loaders.gl/compression",
         "@loaders.gl/core",
         "@loaders.gl/crypto",
-        "@loaders.gl/draco",
-        "@loaders.gl/gltf",
-        "@loaders.gl/images",
-        "@loaders.gl/loader-utils",
+        "@loaders.gl/draco@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/gltf@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
         "@loaders.gl/math",
         "@loaders.gl/tiles",
         "@loaders.gl/zip",
-        "@math.gl/core",
+        "@math.gl/core@4.1.0",
         "@math.gl/culling",
         "@math.gl/geospatial",
-        "@probe.gl/log",
+        "@probe.gl/log@4.1.0",
         "long@5.3.0"
       ]
     },
@@ -457,15 +519,15 @@
       "integrity": "sha512-1IZIFb6MaIiwMwsLEUk5Tyu8qlY7ge2S2Uy2qJxTP23CHakdocue89c54ygo0CgOiUw3Tr1r5JVa3EhB4+lOJQ==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/loader-utils",
-        "@loaders.gl/worker-utils",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/worker-utils@4.3.3_@loaders.gl+core@4.3.3",
         "@types/brotli",
         "@types/pako",
         "brotli",
         "fflate",
         "lz4js",
         "lzo-wasm",
-        "pako",
+        "pako@1.0.11",
         "snappyjs",
         "zstd-codec"
       ]
@@ -473,78 +535,121 @@
     "@loaders.gl/core@4.3.3": {
       "integrity": "sha512-RaQ3uNg4ZaVqDRgvJ2CjaOjeeHdKvbKuzFFgbGnflVB9is5bu+h3EKc3Jke7NGVvLBsZ6oIXzkwHijVsMfxv8g==",
       "dependencies": [
-        "@loaders.gl/loader-utils",
-        "@loaders.gl/schema",
-        "@loaders.gl/worker-utils",
-        "@probe.gl/log"
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/worker-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@probe.gl/log@4.1.0"
       ]
     },
     "@loaders.gl/crypto@4.3.3_@loaders.gl+core@4.3.3": {
       "integrity": "sha512-uwqcSGJ4DdS2g3BYc4Noa4EGfnbK63wCQnke4Xyc7KTNl6P70oblDlRbL3df1WQPMTUoXYOERE+ei7Q0Tee4vQ==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/loader-utils",
-        "@loaders.gl/worker-utils",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/worker-utils@4.3.3_@loaders.gl+core@4.3.3",
         "@types/crypto-js"
+      ]
+    },
+    "@loaders.gl/draco@3.4.15": {
+      "integrity": "sha512-SStmyP0ZnS4JbWZb2NhrfiHW65uy3pVTTzQDTgXfkR5cD9oDAEu4nCaHbQ8x38/m39FHliCPgS9b1xWvLKQo8w==",
+      "dependencies": [
+        "@babel/runtime",
+        "@loaders.gl/loader-utils@3.4.15",
+        "@loaders.gl/schema@3.4.15",
+        "@loaders.gl/worker-utils@3.4.15",
+        "draco3d@1.5.5"
       ]
     },
     "@loaders.gl/draco@4.3.3_@loaders.gl+core@4.3.3": {
       "integrity": "sha512-f2isxvOoH4Pm5p4mGvNN9gVigUwX84j9gdKNMV1aSo56GS1KE3GS2rXaIoy1qaIHMzkPySUTEcOTwayf0hWU7A==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/loader-utils",
-        "@loaders.gl/schema",
-        "@loaders.gl/worker-utils",
-        "draco3d"
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/worker-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "draco3d@1.5.7"
+      ]
+    },
+    "@loaders.gl/geotiff@4.3.3_@loaders.gl+core@4.3.3": {
+      "integrity": "sha512-FJws+olg8vnd66YgXqAO1RFTReUDqT3kcWJHwDlk6SYEeYi00sKtnrDVy2QaU+XEVHUeFtwYMfPlvIrndFAbIA==",
+      "dependencies": [
+        "@loaders.gl/core",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "fast-xml-parser",
+        "geotiff"
       ]
     },
     "@loaders.gl/gis@4.3.3_@loaders.gl+core@4.3.3": {
       "integrity": "sha512-OQNrieRMihsy2mVHuhi7d/SThUdNCgFXmUqhCG53qAVIS+7Nm//lO9zty3EzfOGWHjYcx6+nxl4QO3mR5fXMvg==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/loader-utils",
-        "@loaders.gl/schema",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
         "@mapbox/vector-tile",
         "@math.gl/polygon",
         "pbf"
+      ]
+    },
+    "@loaders.gl/gltf@3.4.15": {
+      "integrity": "sha512-Y6kMNPLiHQPr6aWQw/4BMTxgPHWx3fcib4LPpZCbhyfM8PRn6pOqATVngUXdoOf5XY0QtdKVld6N1kxlr4pJtw==",
+      "dependencies": [
+        "@loaders.gl/draco@3.4.15",
+        "@loaders.gl/images@3.4.15",
+        "@loaders.gl/loader-utils@3.4.15",
+        "@loaders.gl/textures@3.4.15",
+        "@math.gl/core@3.6.3"
       ]
     },
     "@loaders.gl/gltf@4.3.3_@loaders.gl+core@4.3.3": {
       "integrity": "sha512-M7jQ7KIB5itctDmGYuT9gndmjNwk1lwQ+BV4l5CoFp38e4xJESPglj2Kj8csWdm3WJhrxIYEP4GpjXK02n8DSQ==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/draco",
-        "@loaders.gl/images",
-        "@loaders.gl/loader-utils",
-        "@loaders.gl/schema",
-        "@loaders.gl/textures",
-        "@math.gl/core"
+        "@loaders.gl/draco@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/textures@4.3.3_@loaders.gl+core@4.3.3",
+        "@math.gl/core@4.1.0"
+      ]
+    },
+    "@loaders.gl/images@3.4.15": {
+      "integrity": "sha512-QpjYhEetHabY/z9mWZYJXZZp4XJAxa38f9Ii/DjPlnJErepzY5GLBUTDHMu4oZ6n99gGImtuGFicDnFV6mb60g==",
+      "dependencies": [
+        "@loaders.gl/loader-utils@3.4.15"
       ]
     },
     "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3": {
       "integrity": "sha512-s4InjIXqEu0T7anZLj4OBUuDBt2BNnAD0GLzSexSkBfQZfpXY0XJNl4mMf5nUKb5NDfXhIKIqv8y324US+I28A==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/loader-utils"
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3"
+      ]
+    },
+    "@loaders.gl/loader-utils@3.4.15": {
+      "integrity": "sha512-uUx6tCaky6QgCRkqCNuuXiUfpTzKV+ZlJOf6C9bKp62lpvFOv9AwqoXmL23j8nfsENdlzsX3vPhc3en6QQyksA==",
+      "dependencies": [
+        "@babel/runtime",
+        "@loaders.gl/worker-utils@3.4.15",
+        "@probe.gl/stats@3.6.0"
       ]
     },
     "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3": {
       "integrity": "sha512-8erUIwWLiIsZX36fFa/seZsfTsWlLk72Sibh/YZJrPAefuVucV4mGGzMBZ96LE2BUfJhadn250eio/59TUFbNw==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/schema",
-        "@loaders.gl/worker-utils",
-        "@probe.gl/log",
-        "@probe.gl/stats"
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/worker-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@probe.gl/log@4.1.0",
+        "@probe.gl/stats@4.1.0"
       ]
     },
     "@loaders.gl/math@4.3.3_@loaders.gl+core@4.3.3": {
       "integrity": "sha512-oUfCFYsybm6fKnYHU1BzqXsh0sCJ+M9CXNnD/083ZNW+lWdxD44eeTE3DdFYPEMe+yyMkLSGx/8WTMv7ev2t5Q==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/images",
-        "@loaders.gl/loader-utils",
-        "@math.gl/core"
+        "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@math.gl/core@4.1.0"
       ]
     },
     "@loaders.gl/mvt@4.3.3_@loaders.gl+core@4.3.3": {
@@ -552,12 +657,18 @@
       "dependencies": [
         "@loaders.gl/core",
         "@loaders.gl/gis",
-        "@loaders.gl/images",
-        "@loaders.gl/loader-utils",
-        "@loaders.gl/schema",
+        "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
         "@math.gl/polygon",
-        "@probe.gl/stats",
+        "@probe.gl/stats@4.1.0",
         "pbf"
+      ]
+    },
+    "@loaders.gl/schema@3.4.15": {
+      "integrity": "sha512-8oRtstz0IsqES7eZd2jQbmCnmExCMtL8T6jWd1+BfmnuyZnQ0B6TNccy++NHtffHdYuzEoQgSELwcdmhSApYew==",
+      "dependencies": [
+        "@types/geojson"
       ]
     },
     "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3": {
@@ -571,22 +682,33 @@
       "integrity": "sha512-qPfpYL0imojyic0dTW71d9M8k2SY+wD60m31658vtsMogdVeBiAX/WYtk8W/NKcqBS8FMv9CC41PlULrvcZ7TQ==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/images",
-        "@loaders.gl/loader-utils",
-        "@loaders.gl/schema",
+        "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
         "@mapbox/martini"
+      ]
+    },
+    "@loaders.gl/textures@3.4.15": {
+      "integrity": "sha512-QHnmxBYtLvTdG1uMz2KWcxVY8KPb1+XyPJUoZV9GMcQkulz+CwFB8BaX8nROfMDz9KKYoPfksCzjig0LZ0WBJQ==",
+      "dependencies": [
+        "@loaders.gl/images@3.4.15",
+        "@loaders.gl/loader-utils@3.4.15",
+        "@loaders.gl/schema@3.4.15",
+        "@loaders.gl/worker-utils@3.4.15",
+        "ktx-parse@0.0.4",
+        "texture-compressor"
       ]
     },
     "@loaders.gl/textures@4.3.3_@loaders.gl+core@4.3.3": {
       "integrity": "sha512-qIo4ehzZnXFpPKl1BGQG4G3cAhBSczO9mr+H/bT7qFwtSirWVlqsvMlx1Q4VpmouDu+tudwwOlq7B3yqU5P5yQ==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/images",
-        "@loaders.gl/loader-utils",
-        "@loaders.gl/schema",
-        "@loaders.gl/worker-utils",
-        "@math.gl/types",
-        "ktx-parse",
+        "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/worker-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@math.gl/types@4.1.0",
+        "ktx-parse@0.7.1",
         "texture-compressor"
       ]
     },
@@ -594,25 +716,31 @@
       "integrity": "sha512-cmC/spc+DM5aCSHoHrEuTPhDLuZRtkrWnlHkhC2Tur9uiUr41U3vXnC5slJkOeIWkaN4Q7KRFGCQ6SCendYfMg==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/loader-utils",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
         "@loaders.gl/math",
-        "@math.gl/core",
+        "@math.gl/core@4.1.0",
         "@math.gl/culling",
         "@math.gl/geospatial",
         "@math.gl/web-mercator",
-        "@probe.gl/stats"
+        "@probe.gl/stats@4.1.0"
       ]
     },
     "@loaders.gl/wms@4.3.3_@loaders.gl+core@4.3.3": {
       "integrity": "sha512-SmpdFB/Jhtzbc52TlMKRSxQkUDfYP/FN8qdTdL3PtVN74Vuh4eZ8t7nLzplUCx0tbkbT1D7nfreSU4ndWq2zjQ==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/images",
-        "@loaders.gl/loader-utils",
-        "@loaders.gl/schema",
+        "@loaders.gl/images@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
         "@loaders.gl/xml",
         "@turf/rewind",
         "deep-strict-equal"
+      ]
+    },
+    "@loaders.gl/worker-utils@3.4.15": {
+      "integrity": "sha512-zUUepOYRYmcYIcr/c4Mchox9h5fBFNkD81rsGnLlZyq19QvyHzN+93SVxrLc078gw93t2RKrVcOOZY13zT3t1w==",
+      "dependencies": [
+        "@babel/runtime"
       ]
     },
     "@loaders.gl/worker-utils@4.3.3_@loaders.gl+core@4.3.3": {
@@ -625,8 +753,8 @@
       "integrity": "sha512-p4GjJn7cElnSxZE2DVsTPWnEJWL3iqTVnGbW2ODHFpW2E7ClPmyoDsUxb8zdW8DuQKfLPJkUILtubbaHmwOwZg==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/loader-utils",
-        "@loaders.gl/schema",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
+        "@loaders.gl/schema@4.3.3_@loaders.gl+core@4.3.3",
         "fast-xml-parser"
       ]
     },
@@ -636,10 +764,13 @@
         "@loaders.gl/compression",
         "@loaders.gl/core",
         "@loaders.gl/crypto",
-        "@loaders.gl/loader-utils",
+        "@loaders.gl/loader-utils@4.3.3_@loaders.gl+core@4.3.3",
         "jszip",
         "md5"
       ]
+    },
+    "@luma.gl/constants@8.5.21": {
+      "integrity": "sha512-aJxayGxTT+IRd1vfpcgD/cKSCiVJjBNiuiChS96VulrmCvkzUOLvYXr42y5qKB4RyR7vOIda5uQprNzoHrhQAA=="
     },
     "@luma.gl/constants@9.1.2": {
       "integrity": "sha512-j0aVKWJJEwL2LF+KCTRVQ5seTrpX3L7VKq7bQ97znp4YqIwIMp8vv3Tkhf5P+XdxcfXZlPZsG379PuuwYB8a7w=="
@@ -647,10 +778,24 @@
     "@luma.gl/core@9.1.2": {
       "integrity": "sha512-yApcL9LQxj8GZ7MqMTPlTo5MrWyEv/JxK69GWwZdzpb2hW8fdt4eQLPNkDTEblKP7QJheMwGkPNTH7Q+l1l17w==",
       "dependencies": [
-        "@math.gl/types",
-        "@probe.gl/env",
-        "@probe.gl/log",
-        "@probe.gl/stats",
+        "@math.gl/types@4.1.0",
+        "@probe.gl/env@4.1.0",
+        "@probe.gl/log@4.1.0",
+        "@probe.gl/stats@4.1.0",
+        "@types/offscreencanvas"
+      ]
+    },
+    "@luma.gl/engine@8.5.21": {
+      "integrity": "sha512-IG3WQSKXFNUEs8QG7ZjHtGiOtsakUu+BAxtJ6997A6/F06yynZ44tPe5NU70jG9Yfu3kV0LykPZg7hO3vXZDiA==",
+      "dependencies": [
+        "@babel/runtime",
+        "@luma.gl/constants@8.5.21",
+        "@luma.gl/gltools",
+        "@luma.gl/shadertools@8.5.21",
+        "@luma.gl/webgl@8.5.21",
+        "@math.gl/core@3.6.3",
+        "@probe.gl/env@3.6.0",
+        "@probe.gl/stats@3.6.0",
         "@types/offscreencanvas"
       ]
     },
@@ -658,40 +803,81 @@
       "integrity": "sha512-OIQJvxQaPLyFMe+7C6vt+a5gA7T9feDaGtT7lyLkeVIc9dJFJYQkwLMGMZE5E83c2yYubptjz/RvmRz7vGfYxQ==",
       "dependencies": [
         "@luma.gl/core",
-        "@luma.gl/shadertools",
-        "@math.gl/core",
-        "@math.gl/types",
-        "@probe.gl/log",
-        "@probe.gl/stats"
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2",
+        "@math.gl/core@4.1.0",
+        "@math.gl/types@4.1.0",
+        "@probe.gl/log@4.1.0",
+        "@probe.gl/stats@4.1.0"
+      ]
+    },
+    "@luma.gl/experimental@8.5.21_@loaders.gl+gltf@3.4.15_@loaders.gl+images@3.4.15_@luma.gl+engine@8.5.21_@luma.gl+gltools@8.5.21_@luma.gl+shadertools@8.5.21_@luma.gl+webgl@8.5.21": {
+      "integrity": "sha512-uFKPChGofyihOKxtqJy78QCQCDFnuMTK4QHrUX/qiTnvFSO8BgtTUevKvWGN9lBvq+uDD0lSieeF9yBzhQfAzw==",
+      "dependencies": [
+        "@loaders.gl/gltf@3.4.15",
+        "@loaders.gl/images@3.4.15",
+        "@luma.gl/constants@8.5.21",
+        "@luma.gl/engine@8.5.21",
+        "@luma.gl/gltools",
+        "@luma.gl/shadertools@8.5.21",
+        "@luma.gl/webgl@8.5.21",
+        "@math.gl/core@3.6.3",
+        "earcut@2.2.4"
       ]
     },
     "@luma.gl/gltf@9.1.2_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3": {
       "integrity": "sha512-YO6iUFDBKBJ0c41mDjB9vbXiYUCA8kQvjQM5Q4l8+cYMOHXB8xHQHQ1TBcOOMHYQDPKPAs1r7HuNB3wktz9jEg==",
       "dependencies": [
         "@loaders.gl/core",
-        "@loaders.gl/textures",
+        "@loaders.gl/textures@4.3.3_@loaders.gl+core@4.3.3",
         "@luma.gl/core",
-        "@luma.gl/engine",
-        "@luma.gl/shadertools",
-        "@math.gl/core"
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
+        "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2",
+        "@math.gl/core@4.1.0"
+      ]
+    },
+    "@luma.gl/gltools@8.5.21": {
+      "integrity": "sha512-6qZ0LaT2Mxa4AJT5F44TFoaziokYiHUwO45vnM/NYUOIu9xevcmS6VtToawytMEACGL6PDeDyVqP3Y80SDzq5g==",
+      "dependencies": [
+        "@babel/runtime",
+        "@luma.gl/constants@8.5.21",
+        "@probe.gl/env@3.6.0",
+        "@probe.gl/log@3.6.0",
+        "@types/offscreencanvas"
+      ]
+    },
+    "@luma.gl/shadertools@8.5.21": {
+      "integrity": "sha512-WQah7yFDJ8cNCLPYpIm3r0wSlXLvjoA279fcknmATvvkW3/i8PcCJ/nYEBJO3hHEwwMQxD16+YZu/uwGiifLMg==",
+      "dependencies": [
+        "@babel/runtime",
+        "@math.gl/core@3.6.3"
       ]
     },
     "@luma.gl/shadertools@9.1.2_@luma.gl+core@9.1.2": {
       "integrity": "sha512-sqQbdjH+n1nEsquSJHDlV3oVOxQzUhMxy4CAoRITR+rfIuKbTovtElMTwRD/7YZ6VuT0Y1uQAjL0KnZzHSfEXQ==",
       "dependencies": [
         "@luma.gl/core",
-        "@math.gl/core",
-        "@math.gl/types",
+        "@math.gl/core@4.1.0",
+        "@math.gl/types@4.1.0",
         "wgsl_reflect"
+      ]
+    },
+    "@luma.gl/webgl@8.5.21": {
+      "integrity": "sha512-ZVLO4W5UuaOlzZIwmFWhnmZ1gYoU97a+heMqxLrSSmCUAsSu3ZETUex9gOmzdM1WWxcdWaa3M68rvKCNEgwz0Q==",
+      "dependencies": [
+        "@babel/runtime",
+        "@luma.gl/constants@8.5.21",
+        "@luma.gl/gltools",
+        "@probe.gl/env@3.6.0",
+        "@probe.gl/stats@3.6.0"
       ]
     },
     "@luma.gl/webgl@9.1.2_@luma.gl+core@9.1.2": {
       "integrity": "sha512-WAGdStjfoPHKdTwOZ1FFfHzjnOznvyR/1Xv9g58zI5kYCGA4E4lJoC0caC0SEXwaanR/iBiVaVF8nENEtSTKOA==",
       "dependencies": [
-        "@luma.gl/constants",
+        "@luma.gl/constants@9.1.2",
         "@luma.gl/core",
-        "@math.gl/types",
-        "@probe.gl/env"
+        "@math.gl/types@4.1.0",
+        "@probe.gl/env@4.1.0"
       ]
     },
     "@mapbox/geojson-rewind@0.5.2": {
@@ -743,34 +929,45 @@
         "tinyqueue"
       ]
     },
+    "@math.gl/core@3.6.3": {
+      "integrity": "sha512-jBABmDkj5uuuE0dTDmwwss7Cup5ZwQ6Qb7h1pgvtkEutTrhkcv8SuItQNXmF45494yIHeoGue08NlyeY6wxq2A==",
+      "dependencies": [
+        "@babel/runtime",
+        "@math.gl/types@3.6.3",
+        "gl-matrix"
+      ]
+    },
     "@math.gl/core@4.1.0": {
       "integrity": "sha512-FrdHBCVG3QdrworwrUSzXIaK+/9OCRLscxI2OUy6sLOHyHgBMyfnEGs99/m3KNvs+95BsnQLWklVfpKfQzfwKA==",
       "dependencies": [
-        "@math.gl/types"
+        "@math.gl/types@4.1.0"
       ]
     },
     "@math.gl/culling@4.1.0": {
       "integrity": "sha512-jFmjFEACnP9kVl8qhZxFNhCyd47qPfSVmSvvjR0/dIL6R9oD5zhR1ub2gN16eKDO/UM7JF9OHKU3EBIfeR7gtg==",
       "dependencies": [
-        "@math.gl/core",
-        "@math.gl/types"
+        "@math.gl/core@4.1.0",
+        "@math.gl/types@4.1.0"
       ]
     },
     "@math.gl/geospatial@4.1.0": {
       "integrity": "sha512-BzsUhpVvnmleyYF6qdqJIip6FtIzJmnWuPTGhlBuPzh7VBHLonCFSPtQpbkRuoyAlbSyaGXcVt6p6lm9eK2vtg==",
       "dependencies": [
-        "@math.gl/core",
-        "@math.gl/types"
+        "@math.gl/core@4.1.0",
+        "@math.gl/types@4.1.0"
       ]
     },
     "@math.gl/polygon@4.1.0": {
       "integrity": "sha512-YA/9PzaCRHbIP5/0E9uTYrqe+jsYTQoqoDWhf6/b0Ixz8bPZBaGDEafLg3z7ffBomZLacUty9U3TlPjqMtzPjA==",
       "dependencies": [
-        "@math.gl/core"
+        "@math.gl/core@4.1.0"
       ]
     },
     "@math.gl/sun@4.1.0": {
       "integrity": "sha512-i3q6OCBLSZ5wgZVhXg+X7gsjY/TUtuFW/2KBiq/U1ypLso3S4sEykoU/MGjxUv1xiiGtr+v8TeMbO1OBIh/HmA=="
+    },
+    "@math.gl/types@3.6.3": {
+      "integrity": "sha512-3uWLVXHY3jQxsXCr/UCNPSc2BG0hNUljhmOBt9l+lNFDp7zHgm0cK2Tw4kj2XfkJy4TgwZTBGwRDQgWEbLbdTA=="
     },
     "@math.gl/types@4.1.0": {
       "integrity": "sha512-clYZdHcmRvMzVK5fjeDkQlHUzXQSNdZ7s4xOqC3nJPgz4C/TZkUecTo9YS4PruZqtDda/ag4erndP0MIn40dGA=="
@@ -778,11 +975,14 @@
     "@math.gl/web-mercator@4.1.0": {
       "integrity": "sha512-HZo3vO5GCMkXJThxRJ5/QYUYRr3XumfT8CzNNCwoJfinxy5NtKUd7dusNTXn7yJ40UoB8FMIwkVwNlqaiRZZAw==",
       "dependencies": [
-        "@math.gl/core"
+        "@math.gl/core@4.1.0"
       ]
     },
     "@open-wc/dedupe-mixin@1.4.0": {
       "integrity": "sha512-Sj7gKl1TLcDbF7B6KUhtvr+1UCxdhMbNY5KxdU5IfMFWqL8oy1ZeAcCANjoB1TL0AJTcPmcCFsCbHf8X2jGDUA=="
+    },
+    "@petamoriken/float16@3.9.1": {
+      "integrity": "sha512-j+ejhYwY6PeB+v1kn7lZFACUIG97u90WxMuGosILFsl9d4Ovi0sjk0GlPfoEcx+FzvXZDAfioD+NGnnPamXgMA=="
     },
     "@polka/url@1.0.0-next.28": {
       "integrity": "sha512-8LduaNlMZGwdZ6qWrKlfa+2M4gahzFkprZiAt2TF8uS0qQgBizKXpXURqvTJ4WtmupWxaLqjRb2UCTe72mu+Aw=="
@@ -793,13 +993,32 @@
         "@webcomponents/shadycss"
       ]
     },
+    "@probe.gl/env@3.6.0": {
+      "integrity": "sha512-4tTZYUg/8BICC3Yyb9rOeoKeijKbZHRXBEKObrfPmX4sQmYB15ZOUpoVBhAyJkOYVAM8EkPci6Uw5dLCwx2BEQ==",
+      "dependencies": [
+        "@babel/runtime"
+      ]
+    },
     "@probe.gl/env@4.1.0": {
       "integrity": "sha512-5ac2Jm2K72VCs4eSMsM7ykVRrV47w32xOGMvcgqn8vQdEMF9PRXyBGYEV9YbqRKWNKpNKmQJVi4AHM/fkCxs9w=="
+    },
+    "@probe.gl/log@3.6.0": {
+      "integrity": "sha512-hjpyenpEvOdowgZ1qMeCJxfRD4JkKdlXz0RC14m42Un62NtOT+GpWyKA4LssT0+xyLULCByRAtG2fzZorpIAcA==",
+      "dependencies": [
+        "@babel/runtime",
+        "@probe.gl/env@3.6.0"
+      ]
     },
     "@probe.gl/log@4.1.0": {
       "integrity": "sha512-r4gRReNY6f+OZEMgfWEXrAE2qJEt8rX0HsDJQXUBMoc+5H47bdB7f/5HBHAmapK8UydwPKL9wCDoS22rJ0yq7Q==",
       "dependencies": [
-        "@probe.gl/env"
+        "@probe.gl/env@4.1.0"
+      ]
+    },
+    "@probe.gl/stats@3.6.0": {
+      "integrity": "sha512-JdALQXB44OP4kUBN/UrQgzbJe4qokbVF4Y8lkIA8iVCFnjVowWIgkD/z/0QO65yELT54tTrtepw1jScjKB+rhQ==",
+      "dependencies": [
+        "@babel/runtime"
       ]
     },
     "@probe.gl/stats@4.1.0": {
@@ -1557,19 +1776,19 @@
         "@deck.gl/aggregation-layers",
         "@deck.gl/arcgis",
         "@deck.gl/carto",
-        "@deck.gl/core",
+        "@deck.gl/core@9.1.1_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@deck.gl/extensions",
         "@deck.gl/geo-layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+extensions@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@deck.gl+mesh-layers@9.1.1__@deck.gl+core@9.1.1___@loaders.gl+core@4.3.3___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@luma.gl+core@9.1.2__@luma.gl+engine@9.1.2___@luma.gl+core@9.1.2___@luma.gl+shadertools@9.1.2____@luma.gl+core@9.1.2__@loaders.gl+core@4.3.3__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@deck.gl/google-maps",
         "@deck.gl/json",
-        "@deck.gl/layers",
+        "@deck.gl/layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@deck.gl/mapbox",
-        "@deck.gl/mesh-layers",
+        "@deck.gl/mesh-layers@9.1.1_@deck.gl+core@9.1.1__@loaders.gl+core@4.3.3__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@luma.gl+core@9.1.2_@luma.gl+engine@9.1.2__@luma.gl+core@9.1.2__@luma.gl+shadertools@9.1.2___@luma.gl+core@9.1.2_@loaders.gl+core@4.3.3_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2",
         "@deck.gl/react",
         "@deck.gl/widgets",
         "@loaders.gl/core",
         "@luma.gl/core",
-        "@luma.gl/engine"
+        "@luma.gl/engine@9.1.2_@luma.gl+core@9.1.2_@luma.gl+shadertools@9.1.2__@luma.gl+core@9.1.2"
       ]
     },
     "deep-strict-equal@0.2.0": {
@@ -1586,6 +1805,9 @@
     },
     "devalue@5.1.1": {
       "integrity": "sha512-maua5KUiapvEwiEAe+XnlZ3Rh0GD+qI1J/nb9vrJc3muPXvcF/8gXYTWF76+5DAqHyDUtOIImEuo0YKE9mshVw=="
+    },
+    "draco3d@1.5.5": {
+      "integrity": "sha512-JVuNV0EJzD3LBYhGyIXJLeBID/EVtmFO1ZNhAYflTgiMiAJlbhXQmRRda/azjc8MRVMHh0gqGhiqHUo5dIXM8Q=="
     },
     "draco3d@1.5.7": {
       "integrity": "sha512-m6WCKt/erDXcw+70IJXnG7M3awwQPAsZvJGX5zY7beBqpELw6RDGkYVU0W43AFxye4pDZ5i2Lbyc/NNGqwjUVQ=="
@@ -1678,6 +1900,19 @@
     "geojson-vt@4.0.2": {
       "integrity": "sha512-AV9ROqlNqoZEIJGfm1ncNjEXfkz2hdFlZf0qkVfmkwdKa8vj7H16YUOT81rJw1rdFhyEDlN2Tds91p/glzbl5A=="
     },
+    "geotiff@2.1.3": {
+      "integrity": "sha512-PT6uoF5a1+kbC3tHmZSUsLHBp2QJlHasxxxxPW47QIY1VBKpFB+FcDvX+MxER6UzgLQZ0xDzJ9s48B9JbOCTqA==",
+      "dependencies": [
+        "@petamoriken/float16",
+        "lerc",
+        "pako@2.1.0",
+        "parse-headers",
+        "quick-lru",
+        "web-worker",
+        "xml-utils",
+        "zstddec"
+      ]
+    },
     "get-stream@6.0.1": {
       "integrity": "sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg=="
     },
@@ -1759,7 +1994,7 @@
       "integrity": "sha512-xXDvecyTpGLrqFrvkrUSoxxfJI5AH7U8zxxtVclpsUtMCq4JQ290LY8AW5c7Ggnr/Y/oK+bQMbqK2qmtk3pN4g==",
       "dependencies": [
         "lie",
-        "pako",
+        "pako@1.0.11",
         "readable-stream",
         "setimmediate"
       ]
@@ -1773,8 +2008,14 @@
     "kleur@4.1.5": {
       "integrity": "sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ=="
     },
+    "ktx-parse@0.0.4": {
+      "integrity": "sha512-LY3nrmfXl+wZZdPxgJ3ZmLvG+wkOZZP3/dr4RbQj1Pk3Qwz44esOOSFFVQJcNWpXAtiNIC66WgXufX/SYgYz6A=="
+    },
     "ktx-parse@0.7.1": {
       "integrity": "sha512-FeA3g56ksdFNwjXJJsc1CCc7co+AJYDp6ipIp878zZ2bU8kWROatLYf39TQEd4/XRSUvBXovQ8gaVKWPXsCLEQ=="
+    },
+    "lerc@3.0.0": {
+      "integrity": "sha512-Rm4J/WaHhRa93nCN2mwWDZFoRVF18G1f47C+kvQWyHGEZxFpTUi73p7lMVSAndyxGt6lJ2/CFbOcf9ra5p8aww=="
     },
     "lie@3.3.0": {
       "integrity": "sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ==",
@@ -1958,6 +2199,12 @@
     "pako@1.0.11": {
       "integrity": "sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw=="
     },
+    "pako@2.1.0": {
+      "integrity": "sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug=="
+    },
+    "parse-headers@2.0.5": {
+      "integrity": "sha512-ft3iAoLOB/MlwbNXgzy43SWGP6sQki2jQvAyBg/zDFAgr9bfNWZIUj42Kw2eJIl8kEi4PbgE6U1Zau/HwI75HA=="
+    },
     "pbf@3.3.0": {
       "integrity": "sha512-XDF38WCH3z5OV/OVa8GKUNtLAyneuzbCisx7QUCF8Q6Nutx0WnJrQe5O+kOtBlLfRNUws98Y58Lblp+NJG5T4Q==",
       "dependencies": [
@@ -2004,6 +2251,9 @@
         "@mapbox/tile-cover"
       ]
     },
+    "quick-lru@6.1.2": {
+      "integrity": "sha512-AAFUA5O1d83pIHEhJwWCq/RQcRukCkn/NSm2QsTEMle5f2hP0ChI2+3Xb051PZCkLryI/Ir1MVKviT2FIloaTQ=="
+    },
     "quickselect@3.0.0": {
       "integrity": "sha512-XdjUArbK4Bm5fLLvlm5KpTFOiOThgfWWI4axAZDWg4E/0mKdZyI9tNEfds27qCi1ze/vwTR16kvmmGhRra3c2g=="
     },
@@ -2031,6 +2281,9 @@
     },
     "readdirp@4.1.2": {
       "integrity": "sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg=="
+    },
+    "regenerator-runtime@0.14.1": {
+      "integrity": "sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw=="
     },
     "resolve-protobuf-schema@2.1.0": {
       "integrity": "sha512-kI5ffTiZWmJaS/huM8wZfEMer1eRd7oJQhDuxeCLe3t7N7mX3z94CN0xPxBQxFYQTSNz9T0i+v6inKqSdK8xrQ==",
@@ -2253,6 +2506,9 @@
         "pbf"
       ]
     },
+    "web-worker@1.5.0": {
+      "integrity": "sha512-RiMReJrTAiA+mBjGONMnjVDP2u3p9R1vkcGz6gDIrOMT3oGuYwX2WRMYI9ipkphSuE5XKEhydbhNEJh4NY9mlw=="
+    },
     "wgsl_reflect@1.0.17": {
       "integrity": "sha512-TzeBJSkFJRb8VEAOiUxZbcHhtcs8w4rJi9zcQTLv4OZYgPOpIGvd74ukV58CNU3FB+sIKTO0CpHeOAFsTjoc1g=="
     },
@@ -2261,6 +2517,9 @@
       "dependencies": [
         "isexe"
       ]
+    },
+    "xml-utils@1.10.1": {
+      "integrity": "sha512-Dn6vJ1Z9v1tepSjvnCpwk5QqwIPcEFKdgnjqfYOABv1ngSofuAhtlugcUC3ehS1OHdgDWSG6C5mvj+Qm15udTQ=="
     },
     "xss@1.0.13": {
       "integrity": "sha512-clu7dxTm1e8Mo5fz3n/oW3UCXBfV89xZ72jM8yzo1vR/pIS0w3sgB3XV2H8Vm6zfGnHL0FzvLJPJEBhd86/z4Q==",
@@ -2274,12 +2533,21 @@
     },
     "zstd-codec@0.1.5": {
       "integrity": "sha512-v3fyjpK8S/dpY/X5WxqTK3IoCnp/ZOLxn144GZVlNUjtwAchzrVo03h+oMATFhCIiJ5KTr4V3vDQQYz4RU684g=="
+    },
+    "zstddec@0.1.0": {
+      "integrity": "sha512-w2NTI8+3l3eeltKAdK8QpiLo/flRAr2p8AGeakfMZOXBxOg9HIu4LVDxBi81sYgVhFhdJjv1OrB5ssI8uFPoLg=="
     }
   },
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@deck.gl/core@^9.1.4",
         "npm:@deck.gl/geo-layers@^9.1.4",
+        "npm:@deck.gl/layers@^9.1.4",
+        "npm:@deck.gl/mesh-layers@^9.1.4",
+        "npm:@loaders.gl/core@^4.3.3",
+        "npm:@loaders.gl/geotiff@^4.3.3",
+        "npm:@luma.gl/experimental@^8.5.21",
         "npm:@sveltejs/adapter-static@^3.0.6",
         "npm:@sveltejs/kit@^2.9.0",
         "npm:@sveltejs/vite-plugin-svelte@5",
