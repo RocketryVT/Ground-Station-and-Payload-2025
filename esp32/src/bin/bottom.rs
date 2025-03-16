@@ -37,7 +37,11 @@ type ChannelBuffer = [u8; 256];
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
     esp_println::logger::init_logger_from_env();
-    let peripherals = esp_hal::init(esp_hal::Config::default());
+    let peripherals = esp_hal::init({
+        let mut config = esp_hal::Config::default();
+        config.cpu_clock = esp_hal::clock::CpuClock::max();
+        config
+    });
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     esp_hal_embassy::init(timg0.timer0);
 

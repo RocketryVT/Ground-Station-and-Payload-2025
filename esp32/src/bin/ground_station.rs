@@ -3,7 +3,7 @@
 
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_time::Timer;
+// use embassy_time::Timer;
 
 use byteorder::{ByteOrder, LittleEndian};
 use esp_hal::spi::{Mode, master::Spi, master::Config};
@@ -36,7 +36,11 @@ struct GpsData {
 #[esp_hal_embassy::main]
 async fn main(_spawner: Spawner) {
     esp_println::logger::init_logger_from_env();
-    let peripherals = esp_hal::init(esp_hal::Config::default());
+    let peripherals = esp_hal::init({
+        let mut config = esp_hal::Config::default();
+        config.cpu_clock = esp_hal::clock::CpuClock::max();
+        config
+    });
 
     println!("Init");
 

@@ -36,7 +36,10 @@ esp-hal = { version = "0.23", features = ["log" ] }
 esp-hal-embassy = { version = "0.6.0", features = []} # "integrated-timers"
 esp-println = { version = "0.13", features = ["log"] }
 esp-storage = { version = "0.4.0", features = [] }
-esp-wifi = { version = "0.12", features = ["log", "esp-alloc"] }
+esp-wifi = { version = "0.12", features = ["log", "esp-alloc", "ble"] }
+bt-hci = { version = "0.2" }
+trouble-host = { git="https://github.com/embassy-rs/trouble.git", rev="b6694cf00b602efe9c1c6e639e97218ebf623479" }
+bitflags ={ version = "2.9"}
 
 fugit = "0.3"
 heapless = "0.8"

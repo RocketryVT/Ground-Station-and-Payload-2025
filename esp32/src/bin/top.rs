@@ -31,7 +31,11 @@ type ChannelBuffer = [u8; 44];
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
     esp_println::logger::init_logger_from_env();
-    let peripherals = esp_hal::init(esp_hal::Config::default());
+    let peripherals = esp_hal::init({
+        let mut config = esp_hal::Config::default();
+        config.cpu_clock = esp_hal::clock::CpuClock::max();
+        config
+    });
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     esp_hal_embassy::init(timg0.timer0);
 
@@ -116,42 +120,42 @@ async fn main(spawner: Spawner) {
 
     // Setup UART with PICO
     println!("Init UART");
-    let uart_tx = peripherals.GPIO47;
-    let uart_rx = peripherals.GPIO48;
-    let config = esp_hal::uart::Config::default()
-        .with_baudrate(115200)
-        .with_data_bits(esp_hal::uart::DataBits::_8)
-        .with_parity(esp_hal::uart::Parity::None)
-        .with_stop_bits(esp_hal::uart::StopBits::_1);
-    let uart = esp_hal::uart::Uart::new(peripherals.UART1, config)
-        .expect("Failed to initialize UART")
-        .with_tx(uart_tx)
-        .with_rx(uart_rx)
-        .into_async();
-    println!("UART initialized");
-   let (uart_rx, uart_tx) = uart.split();
+//     let uart_tx = peripherals.GPIO47;
+//     let uart_rx = peripherals.GPIO48;
+//     let config = esp_hal::uart::Config::default()
+//         .with_baudrate(115200)
+//         .with_data_bits(esp_hal::uart::DataBits::_8)
+//         .with_parity(esp_hal::uart::Parity::None)
+//         .with_stop_bits(esp_hal::uart::StopBits::_1);
+//     let uart = esp_hal::uart::Uart::new(peripherals.UART1, config)
+//         .expect("Failed to initialize UART")
+//         .with_tx(uart_tx)
+//         .with_rx(uart_rx)
+//         .into_async();
+//     println!("UART initialized");
+//    let (uart_rx, uart_tx) = uart.split();
 
     println!("Spawning read_pico task");
 
     // Setup Zero Copy Channel
-    static BUF: StaticCell<[ChannelBuffer; 1]> = StaticCell::new();
-    let buf = BUF.init([[0; 44]; 1]);
+    // static BUF: StaticCell<[ChannelBuffer; 1]> = StaticCell::new();
+    // let buf = BUF.init([[0; 44]; 1]);
 
-    static CHANNEL: StaticCell<Channel<'_, NoopRawMutex, ChannelBuffer>> = StaticCell::new();
-    let channel = CHANNEL.init(Channel::new(buf));
-    let (sender, mut receiver) = channel.split();
+    // static CHANNEL: StaticCell<Channel<'_, NoopRawMutex, ChannelBuffer>> = StaticCell::new();
+    // let channel = CHANNEL.init(Channel::new(buf));
+    // let (sender, mut receiver) = channel.split();
 
 //    spawner.spawn(send_pico(uart_tx)).unwrap();
 
-    match spawner.spawn(read_pico(uart_rx, sender)) {
-        Ok(_) => {}
-        Err(err) => {
-            loop {
-                println!("Error = {}", err);
-                Timer::after_secs(1).await;
-            }
-        }
-    }
+    // match spawner.spawn(read_pico(uart_rx, sender)) {
+    //     Ok(_) => {}
+    //     Err(err) => {
+    //         loop {
+    //             println!("Error = {}", err);
+    //             Timer::after_secs(1).await;
+    //         }
+    //     }
+    // }
 
     // let buffer = [0x01u8, 0x02u8, 0x03u8];
     // let buffer = Mesh::protocol::AprsCompressedPositionReport {
@@ -159,10 +163,11 @@ async fn main(spawner: Spawner) {
 
     loop {
         println!("Waiting for data");
-        let buffer = receiver.receive().await;
+        // let buffer = receiver.receive().await;
+        let buffer = [0x01u8, 0x02u8, 0x03u8];
         println!("Recieved Buffer = {:?}", buffer);
         match lora
-            .prepare_for_tx(&mdltn_params, &mut tx_pkt_params, 17, buffer)
+            .prepare_for_tx(&mdltn_params, &mut tx_pkt_params, 17, &buffer)
             .await
         {
             Ok(()) => {}
@@ -182,7 +187,7 @@ async fn main(spawner: Spawner) {
             }
         };
         // Locks the Mutex
-        receiver.receive_done();
+        // receiver.receive_done();
 
         // match lora.sleep(false).await {
         //     Ok(()) => println!("Sleep successful"),
