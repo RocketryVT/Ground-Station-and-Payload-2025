@@ -3,15 +3,15 @@
 
     import { writable } from 'svelte/store';
 
-    interface Coordinates {
-        longitude: number;
-        latitude: number;
-    }
+    // interface Coordinates {
+    //     longitude: number;
+    //     latitude: number;
+    // }
 
-    const gpsCoordinates = writable<Coordinates[]>([]);
+    // const gpsCoordinates = writable<Coordinates[]>([]);
 
     // Example of adding a new GPS coordinate
-    gpsCoordinates.update(coords => [...coords, { longitude: -122.45, latitude: 37.78 }]);
+    // gpsCoordinates.update(coords => [...coords, { longitude: -122.45, latitude: 37.78 }]);
 </script>
   
   <style>

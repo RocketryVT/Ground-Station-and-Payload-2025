@@ -4,6 +4,16 @@
   import Charts from "$lib/components/Charts.svelte"; // Bottom Left
   import RocketVisualization from "$lib/components/RocketVisualization.svelte"; // Bottom Right
   import BottomBar from "$lib/components/BottomBar.svelte"; // Bottom Bar
+
+  import { mach, velocity } from "$lib/stores";
+
+    // Every second increase the mach by 0.1
+    setInterval(() => {
+        mach.update((value) => {
+            return parseFloat((value + 0.1).toFixed(1));
+        });
+    }, 1000);
+
 </script>
 
 <div class="grid grid-rows-[1fr_1fr_auto] grid-cols-2 gap-2 h-screen">
