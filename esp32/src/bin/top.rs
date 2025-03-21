@@ -1,16 +1,18 @@
 #![no_std]
 #![no_main]
+use embassy_sync::channel::{Channel, Sender};
+use esp_hal::time::Rate;
 use static_cell::StaticCell;
 
 use embassy_executor::Spawner;
-use embassy_sync::blocking_mutex::raw::NoopRawMutex;
-use embassy_sync::zerocopy_channel::{Channel, Sender};
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+// use embassy_sync::zerocopy_channel::{Channel, Sender};
 use embassy_time::Timer;
 
 use esp_hal::spi::{master::Config, master::Spi, Mode};
-use esp_hal::uart::{AtCmdConfig, Uart, UartRx, UartTx};
+use esp_hal::uart::{UartRx, UartTx, IoError, RxError, TxError, RxConfig};
 use esp_hal::Async;
-use esp_hal::{time::RateExtU32, timer::timg::TimerGroup};
+use esp_hal::{timer::timg::TimerGroup};
 
 
 use lora_phy::iv::GenericSx126xInterfaceVariant;
@@ -18,41 +20,56 @@ use lora_phy::sx126x::{Sx1262, Sx126x, TcxoCtrlVoltage};
 use lora_phy::{mod_params::*, sx126x};
 use lora_phy::LoRa;
 
+use postcard::from_bytes;
+
 // use Mesh::protocol;
 
 // use defmt::*;
 use esp_println::println;
 use esp_backtrace as _;
+use Mesh::protocol::AprsCompressedPositionReport;
 
 const LORA_FREQUENCY_IN_HZ: u32 = 905_200_000; // warning: set this appropriately for the region
 
-type ChannelBuffer = [u8; 44];
+// type ChannelBuffer = [u8; 96];
+// static CHANNEL: StaticCell<Channel<'_, NoopRawMutex, ChannelBuffer>> = StaticCell::new();
+static LORA_CHANNEL: Channel<CriticalSectionRawMutex, Mesh::protocol::AprsCompressedPositionReport, 10> = Channel::new();
+
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
     esp_println::logger::init_logger_from_env();
-    let peripherals = esp_hal::init({
-        let mut config = esp_hal::Config::default();
-        config.cpu_clock = esp_hal::clock::CpuClock::max();
-        config
-    });
+    // let peripherals = esp_hal::init({
+    //     let mut config = esp_hal::Config::default();
+    //     config.cpu_clock = esp_hal::clock::CpuClock::max();
+    //     config
+    // });
+    let peripherals = esp_hal::init(
+        esp_hal::Config::default()
+            .with_cpu_clock(esp_hal::clock::CpuClock::max())
+    );
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     esp_hal_embassy::init(timg0.timer0);
 
+    Timer::after_secs(5).await;
+
     // According to Heltec V32 Page
-    let lora_nss = esp_hal::gpio::Output::new(peripherals.GPIO8, esp_hal::gpio::Level::High);
+    let output_config = esp_hal::gpio::OutputConfig::default();
+    let input_config = esp_hal::gpio::InputConfig::default()
+        .with_pull(esp_hal::gpio::Pull::None);
+    let lora_nss = esp_hal::gpio::Output::new(peripherals.GPIO8, esp_hal::gpio::Level::High, output_config);
     let lora_sck = peripherals.GPIO9;
     let lora_mosi = peripherals.GPIO10;
     let lora_miso = peripherals.GPIO11;
-    let lora_rst = esp_hal::gpio::Output::new(peripherals.GPIO12, esp_hal::gpio::Level::High);
-    let lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO13, esp_hal::gpio::Pull::None);
-    let lora_dio1 = esp_hal::gpio::Input::new(peripherals.GPIO14, esp_hal::gpio::Pull::None);
+    let lora_rst = esp_hal::gpio::Output::new(peripherals.GPIO12, esp_hal::gpio::Level::High, output_config);
+    let lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO13, input_config);
+    let lora_dio1 = esp_hal::gpio::Input::new(peripherals.GPIO14, input_config);
     // let lora_ant = dummy_pin::DummyPin::new_high();
 
     println!("Init LoRa");
 
     let config = Config::default()
-        .with_frequency(10.MHz())
+        .with_frequency(Rate::from_mhz(10))
         .with_mode(Mode::_0);
     let spi2 = Spi::new(peripherals.SPI2, config)
         .unwrap()
@@ -120,52 +137,59 @@ async fn main(spawner: Spawner) {
 
     // Setup UART with PICO
     println!("Init UART");
-//     let uart_tx = peripherals.GPIO47;
-//     let uart_rx = peripherals.GPIO48;
-//     let config = esp_hal::uart::Config::default()
-//         .with_baudrate(115200)
-//         .with_data_bits(esp_hal::uart::DataBits::_8)
-//         .with_parity(esp_hal::uart::Parity::None)
-//         .with_stop_bits(esp_hal::uart::StopBits::_1);
-//     let uart = esp_hal::uart::Uart::new(peripherals.UART1, config)
-//         .expect("Failed to initialize UART")
-//         .with_tx(uart_tx)
-//         .with_rx(uart_rx)
-//         .into_async();
-//     println!("UART initialized");
-//    let (uart_rx, uart_tx) = uart.split();
+    let uart_tx = peripherals.GPIO34;
+    let uart_rx = peripherals.GPIO33;
+    let config = esp_hal::uart::Config::default()
+        .with_baudrate(115200)
+        .with_data_bits(esp_hal::uart::DataBits::_8)
+        .with_parity(esp_hal::uart::Parity::None)
+        .with_stop_bits(esp_hal::uart::StopBits::_1)
+        .with_rx(
+            esp_hal::uart::RxConfig::default()
+            .with_fifo_full_threshold(120)
+            // .with_timeout_none()
+        );
+    let uart = esp_hal::uart::Uart::new(peripherals.UART1, config)
+        .expect("Failed to initialize UART")
+        .with_tx(uart_tx)
+        .with_rx(uart_rx)
+        .into_async();
+    println!("UART initialized");
+   let (uart_rx, _uart_tx) = uart.split();
 
     println!("Spawning read_pico task");
 
     // Setup Zero Copy Channel
     // static BUF: StaticCell<[ChannelBuffer; 1]> = StaticCell::new();
-    // let buf = BUF.init([[0; 44]; 1]);
-
-    // static CHANNEL: StaticCell<Channel<'_, NoopRawMutex, ChannelBuffer>> = StaticCell::new();
+    // let buf = BUF.init([[0; 96]; 1]);
     // let channel = CHANNEL.init(Channel::new(buf));
     // let (sender, mut receiver) = channel.split();
 
 //    spawner.spawn(send_pico(uart_tx)).unwrap();
 
-    // match spawner.spawn(read_pico(uart_rx, sender)) {
-    //     Ok(_) => {}
-    //     Err(err) => {
-    //         loop {
-    //             println!("Error = {}", err);
-    //             Timer::after_secs(1).await;
-    //         }
-    //     }
-    // }
+    match spawner.spawn(read_pico(uart_rx, LORA_CHANNEL.sender())) {
+        Ok(_) => {}
+        Err(err) => {
+            loop {
+                println!("Error = {}", err);
+                Timer::after_secs(1).await;
+            }
+        }
+    }
 
-    // let buffer = [0x01u8, 0x02u8, 0x03u8];
-    // let buffer = Mesh::protocol::AprsCompressedPositionReport {
-    // }
+    let gps_reciver = LORA_CHANNEL.receiver();
 
     loop {
         println!("Waiting for data");
-        // let buffer = receiver.receive().await;
-        let buffer = [0x01u8, 0x02u8, 0x03u8];
-        println!("Recieved Buffer = {:?}", buffer);
+        let buffer: heapless::Vec<u8, 96> = match postcard::to_vec(&gps_reciver.receive().await) {
+            Ok(b) => b,
+            Err(err) => {
+                println!("Serialization error = {:?}", err);
+                heapless::Vec::new()
+            }
+        };
+        // let buffer = [0x01u8, 0x02u8, 0x03u8];
+        // println!("Recieved Buffer = {:?}", buffer);
         match lora
             .prepare_for_tx(&mdltn_params, &mut tx_pkt_params, 17, &buffer)
             .await
@@ -173,7 +197,6 @@ async fn main(spawner: Spawner) {
             Ok(()) => {}
             Err(err) => {
                 println!("Radio error = {:?}", err);
-                return;
             }
         };
 
@@ -183,7 +206,6 @@ async fn main(spawner: Spawner) {
             }
             Err(err) => {
                 println!("Radio error = {:?}", err);
-                return;
             }
         };
         // Locks the Mutex
@@ -196,17 +218,6 @@ async fn main(spawner: Spawner) {
 
         Timer::after_secs(1).await;
     }
-}
-
-#[derive(Debug)]
-struct GpsData {
-    lat: f64,
-    lon: f64,
-    alt: f64,
-    alt_msl: f64,
-    num_satellites: u16,
-    fix_type: u16,
-    time: i64,
 }
 
 #[embassy_executor::task]
@@ -232,44 +243,60 @@ pub async fn send_pico(mut tx: UartTx<'static, Async>) {
 }
 
 #[embassy_executor::task]
-pub async fn read_pico(mut rx: UartRx<'static, Async>, mut sender: Sender<'static, NoopRawMutex, ChannelBuffer>) {
+pub async fn read_pico(mut rx: UartRx<'static, Async>, sender: Sender<'static, CriticalSectionRawMutex, AprsCompressedPositionReport, 10>) {
         const READ_BUF_SIZE: usize = 64;
         const MAX_BUFFER_SIZE: usize = 10 * READ_BUF_SIZE + 16;
 
         let mut rbuf: [u8; MAX_BUFFER_SIZE] = [0u8; MAX_BUFFER_SIZE];
         let mut offset = 0;
+
+        let mut aprs_buffer = [0u8; 96];
         loop {
+            println!("Reading from Pico");
             let r = embedded_io_async::Read::read(&mut rx, &mut rbuf[offset..]).await;
+            match rx.check_for_errors() {
+                Ok(_) => {}
+                Err(err) => {
+                    println!("Error = {:?}", err);
+                    continue;
+                }
+            }
             match r {
                 Ok(len) => {
                     offset += len;
-                    esp_println::println!("Read: {len}, data: {:?}", &rbuf[..offset]);
+                    println!("Read: {len}, data: {:?}", &rbuf[..offset]);
                     offset = 0;
+                    let aprs_report: Result<AprsCompressedPositionReport, _> = from_bytes(&rbuf);
+                    match aprs_report {
+                        Ok(report) => {
+                            println!("Received data: {:?}", report);
+                            match postcard::to_slice(&report, &mut aprs_buffer) {
+                                Ok(serialized_report) => {
+                                    println!("Serialized data: {:?}", serialized_report);
+                                    sender.send(report).await;
+                                    offset = 0;
+                                    rbuf.fill(0);
+                                    
+                                }
+                                Err(err) => {
+                                    println!("Serialization error: {:?}", err);
+                                    continue;
+                                },
+                            };
+                        }
+                        Err(err) => {
+                            println!("Deserialization error: {:?}", err);
+                            continue;
+                        },
+                    }
                 }
-                Err(e) => esp_println::println!("RX Error: {:?}", e),
+                Err(e) => {
+                    println!("RX Error: {:?}", e);
+                    continue;
+                }
             }
-            // Data is 47 bytes, first byte is '$', last two byte is '/r/n'
-            let channel_buffer = sender.send().await;
-            // let mut buffer = [0u8; 44];
-            channel_buffer.copy_from_slice(&rbuf[1..45]);
-            esp_println::println!("Buffer = {:?}", channel_buffer);
-            let mut gpsdata= GpsData {
-                    lat: 0.0,
-                    lon: 0.0,
-                    alt: 0.0,
-                    alt_msl: 0.0,
-                    num_satellites: 0,
-                    fix_type: 0,
-                    time: 0,
-                };
-                gpsdata.lat = f64::from_le_bytes(channel_buffer[0..8].try_into().expect("Failed to convert"));
-                gpsdata.lon = f64::from_le_bytes(channel_buffer[8..16].try_into().expect("Failed to convert"));
-                gpsdata.alt = f64::from_le_bytes(channel_buffer[16..24].try_into().expect("Failed to convert"));
-                gpsdata.alt_msl = f64::from_le_bytes(channel_buffer[24..32].try_into().expect("Failed to convert"));
-                gpsdata.num_satellites = u16::from_le_bytes(channel_buffer[32..34].try_into().expect("Failed to convert"));
-                gpsdata.fix_type = u16::from_le_bytes(channel_buffer[34..36].try_into().expect("Failed to convert"));
-                gpsdata.time = i64::from_le_bytes(channel_buffer[36..44].try_into().expect("Failed to convert"));
-                println!("GPS Data = {:?}", gpsdata);
-                sender.send_done();
+            // YOU MUST READ FASTER THAN 1 SECOND ESP32S3 HAS A UART ERRATA, I HATE EVERYTHING
+            // https://github.com/esp-rs/esp-hal/issues/3168
+            Timer::after_millis(10).await;
         }
 }
