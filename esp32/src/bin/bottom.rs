@@ -5,7 +5,6 @@ use embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice;
 // use embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice;
 use embassy_executor::Spawner;
 
-use embassy_sync::blocking_mutex::raw::NoopRawMutex;
 use embassy_sync::channel::Channel;
 use embassy_sync::mutex::Mutex;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
@@ -13,7 +12,7 @@ use esp_backtrace as _;
 use esp_hal::spi::{master::Config, master::Spi, Mode};
 use esp_hal::time::Rate;
 use esp_hal::Async;
-use esp_hal::{timer::timg::TimerGroup};
+use esp_hal::timer::timg::TimerGroup;
 use esp_hal::i2c::master::I2c;
 use esp_println::println;
 
@@ -23,9 +22,8 @@ use lora_phy::iv::GenericSx126xInterfaceVariant;
 use lora_phy::sx126x::{Sx1262, Sx126x, TcxoCtrlVoltage};
 use lora_phy::{mod_params::*, sx126x};
 use lora_phy::LoRa;
-use static_cell::StaticCell;
 use ublox::{PacketRef, Parser};
-use Mesh::protocol::{APRSGPSFix, AllSensorData, AprsCompressedPositionReport, CompressionOrigin, CompressionType, DeviceType, NMEASource, SensorUpdate};
+use Mesh::protocol::{AllSensorData, AprsCompressedPositionReport, SensorUpdate};
 
 const LORA_FREQUENCY_IN_HZ: u32 = 905_200_000; // warning: set this appropriately for the region
 
@@ -349,10 +347,10 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
                         valid: message.valid().bits(),
                     };
                 }
-                Some(Ok(packet)) => {
+                Some(Ok(_packet)) => {
                     //println!("Packet: {:?}", packet);
                 }
-                Some(Err(e)) => {
+                Some(Err(_e)) => {
                     // Received a malformed packet
                     //println!("Error: {:?}", e);
                 }

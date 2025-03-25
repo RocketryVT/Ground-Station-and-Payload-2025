@@ -27,7 +27,8 @@ embedded-hal-bus = { version = "0.3", features = ["async"]}
 #embedded-io-async   = "0.6.1"
 #embedded-storage    = "0.3.1"
 
-esp-alloc = {  version = "0.6.0" }
+# esp-alloc = {  version = "0.7" }
+esp-alloc = { git = "https://github.com/esp-rs/esp-hal.git" }
 esp-backtrace = { version = "0.15", features = [
     "exception-handler",
     "panic-handler",
@@ -36,7 +37,7 @@ esp-backtrace = { version = "0.15", features = [
 esp-hal = {  features = ["log", "unstable" ], git = "https://github.com/esp-rs/esp-hal.git"}
 esp-hal-embassy = {  features = [], git = "https://github.com/esp-rs/esp-hal.git"} # "integrated-timers"
 esp-println = { version = "0.13", features = ["log"] }
-esp-storage = { version = "0.4.0", features = [] }
+esp-storage = { version = "0.5", features = [] }
 esp-wifi = { features = ["log", "esp-alloc", "ble"], git="https://github.com/esp-rs/esp-hal.git" }
 bt-hci = { version = "0.2" }
 trouble-host = { git="https://github.com/embassy-rs/trouble.git", rev="b6694cf00b602efe9c1c6e639e97218ebf623479" }
@@ -66,7 +67,7 @@ lora-phy = { git = "https://github.com/lora-rs/lora-rs.git"}
 dummy-pin = "1.0"
 
 Mesh = { path = "../libs/Mesh" }
-ssd1306 = "0.9"
+ssd1306 = "0.10"
 embedded-graphics = "0.8"
 
 [features]

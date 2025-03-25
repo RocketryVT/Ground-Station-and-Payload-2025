@@ -113,11 +113,11 @@ use embassy_time::Timer;
 
 use esp_hal::spi::{Mode, master::Spi, master::Config};
 
+use esp_hal::time::Rate;
 use esp_println::println;
 
 use esp_backtrace as _;
 use esp_hal::{
-    time::RateExtU32,
     timer::timg::TimerGroup,
 };
 
@@ -137,20 +137,72 @@ async fn main(_spawner: Spawner) {
 
     println!("Init");
 
-    let lora_nss = esp_hal::gpio::Output::new(peripherals.GPIO4, esp_hal::gpio::Level::High);
-    let lora_sck = peripherals.GPIO18;
-    let lora_mosi = peripherals.GPIO23;
-    let lora_miso = peripherals.GPIO19;
-    let lora_rst = esp_hal::gpio::Output::new(peripherals.GPIO5, esp_hal::gpio::Level::High);
-    // let lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO13, esp_hal::gpio::Pull::None);
-    let lora_dio0 = esp_hal::gpio::Input::new(peripherals.GPIO22, esp_hal::gpio::Pull::None);
-    let lora_dio1 = esp_hal::gpio::Input::new(peripherals.GPIO21, esp_hal::gpio::Pull::None);
-    // let lora_ant = dummy_pin::DummyPin::new_high();
+    // #[cfg(feature = "esp32")] {
+    //     let output_config = esp_hal::gpio::OutputConfig::default();
+    //     let input_config = esp_hal::gpio::InputConfig::default()
+    //         .with_pull(esp_hal::gpio::Pull::None);
+    //     let lora_nss = esp_hal::gpio::Output::new(peripherals.GPIO4, esp_hal::gpio::Level::High, output_config);
+    //     let lora_sck = peripherals.GPIO18;
+    //     let lora_mosi = peripherals.GPIO23;
+    //     let lora_miso = peripherals.GPIO19;
+    //     let lora_rst = esp_hal::gpio::Output::new(peripherals.GPIO5, esp_hal::gpio::Level::High, output_config);
+    //     // let lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO13, esp_hal::gpio::Pull::None);
+    //     let lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO22, input_config);
+    //     let lora_dio1 = esp_hal::gpio::Input::new(peripherals.GPIO21, input_config);
+    //     // let lora_ant = dummy_pin::DummyPin::new_high();
+    // }
+    // #[cfg(not(feature = "esp32"))] {
+    //     // According to Heltec V32 Page
+    //     let output_config = esp_hal::gpio::OutputConfig::default();
+    //     let input_config = esp_hal::gpio::InputConfig::default()
+    //         .with_pull(esp_hal::gpio::Pull::None);
+    //     let lora_nss = esp_hal::gpio::Output::new(peripherals.GPIO8, esp_hal::gpio::Level::High, output_config);
+    //     let lora_sck = peripherals.GPIO9;
+    //     let lora_mosi = peripherals.GPIO10;
+    //     let lora_miso = peripherals.GPIO11;
+    //     let lora_rst = esp_hal::gpio::Output::new(peripherals.GPIO12, esp_hal::gpio::Level::High, output_config);
+    //     let lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO13, input_config);
+    //     let lora_dio1 = esp_hal::gpio::Input::new(peripherals.GPIO14, input_config);
+    //     // let lora_ant = dummy_pin::DummyPin::new_high();
+    // }
+
+    let (lora_nss, lora_sck, lora_mosi, lora_miso, lora_rst, _lora_busy, lora_dio0) = {
+        #[cfg(feature = "esp32")]
+        {
+            let output_config = esp_hal::gpio::OutputConfig::default();
+            let input_config = esp_hal::gpio::InputConfig::default()
+                .with_pull(esp_hal::gpio::Pull::None);
+            (
+                esp_hal::gpio::Output::new(peripherals.GPIO4, esp_hal::gpio::Level::High, output_config),
+                peripherals.GPIO18,
+                peripherals.GPIO23,
+                peripherals.GPIO19,
+                esp_hal::gpio::Output::new(peripherals.GPIO5, esp_hal::gpio::Level::High, output_config),
+                esp_hal::gpio::Input::new(peripherals.GPIO22, input_config),
+                esp_hal::gpio::Input::new(peripherals.GPIO21, input_config),
+            )
+        }
+        #[cfg(not(feature = "esp32"))]
+        {
+            let output_config = esp_hal::gpio::OutputConfig::default();
+            let input_config = esp_hal::gpio::InputConfig::default()
+                .with_pull(esp_hal::gpio::Pull::None);
+            (
+                esp_hal::gpio::Output::new(peripherals.GPIO8, esp_hal::gpio::Level::High, output_config),
+                peripherals.GPIO9,
+                peripherals.GPIO10,
+                peripherals.GPIO11,
+                esp_hal::gpio::Output::new(peripherals.GPIO12, esp_hal::gpio::Level::High, output_config),
+                esp_hal::gpio::Input::new(peripherals.GPIO13, input_config),
+                esp_hal::gpio::Input::new(peripherals.GPIO14, input_config),
+            )
+        }
+    };
 
     println!("Init LoRa");
 
     let config = Config::default()
-        .with_frequency(100.kHz())
+        .with_frequency(Rate::from_khz(100))
         .with_mode(Mode::_0);
     let spi2 = Spi::new(peripherals.SPI2, config)
         .unwrap()
@@ -169,8 +221,8 @@ async fn main(_spawner: Spawner) {
     let iv = GenericSx127xInterfaceVariant::new(
         lora_rst,
         lora_dio0,
-        None,
-        None,
+        None, // RF_Switch_rx
+        None, // RF_Switch_tx
     ).unwrap();
 
     let mut device= embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice::new(&spi2, lora_nss);

@@ -10,9 +10,7 @@ use esp_hal::time::Rate;
 use esp_println::println;
 
 use esp_backtrace as _;
-use esp_hal::{
-    timer::timg::TimerGroup,
-};
+use esp_hal::timer::timg::TimerGroup;
 
 use lora_phy::iv::GenericSx126xInterfaceVariant;
 use lora_phy::sx126x::{Sx1262, Sx126x, TcxoCtrlVoltage};
@@ -184,6 +182,7 @@ async fn main(_spawner: Spawner) {
 
 }
 
+#[allow(dead_code)]
 fn decode_base91(encoded: [u8; 4]) -> u32 {
     let mut value = 0u32;
     for &byte in &encoded {
@@ -192,6 +191,7 @@ fn decode_base91(encoded: [u8; 4]) -> u32 {
     value
 }
 
+#[allow(dead_code)]
 fn decompress_lat_lon(lat_encoded: [u8; 4], lon_encoded: [u8; 4]) -> (f64, f64) {
     let lat_base10 = decode_base91(lat_encoded);
     let lon_base10 = decode_base91(lon_encoded);
@@ -202,6 +202,7 @@ fn decompress_lat_lon(lat_encoded: [u8; 4], lon_encoded: [u8; 4]) -> (f64, f64) 
     (latitude, longitude)
 }
 
+#[allow(dead_code)]
 fn decompress_altitude(cs_bytes: [u8; 2]) -> f64 {
     // Decode the base-91 value from the two bytes
     let c = cs_bytes[0] as u16 - 33;  // Subtract 33 from ASCII values

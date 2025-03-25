@@ -4,7 +4,7 @@
 use bt_hci::controller::ExternalController;
 use defmt::{info, warn};
 use embassy_executor::Spawner;
-use esp_hal::{clock::CpuClock, timer::timg::TimerGroup};
+use esp_hal::timer::timg::TimerGroup;
 use esp_println::println;
 use esp_wifi::ble::controller::BleConnector;
 use embassy_futures::join::join;
@@ -630,7 +630,7 @@ async fn custom_task<C: Controller>(server: &Server<'_>, conn: &Connection<'_>, 
     let quality = server.location_service.position_quality;
     let features = server.location_service.ln_feature;
     let speed = server.location_service.location_and_speed;
-    let control_point = server.location_service.ln_control_point;
+    let _control_point = server.location_service.ln_control_point;
     let navigation = server.location_service.navigation;
 
     let mut latitude = 372379516;
@@ -757,11 +757,9 @@ async fn custom_task<C: Controller>(server: &Server<'_>, conn: &Connection<'_>, 
 async fn main(_s: Spawner) {
     esp_println::logger::init_logger_from_env();
     let peripherals = esp_hal::init({
-        let mut config = esp_hal::Config::default();
-        config.cpu_clock = CpuClock::max();
-        config
+        esp_hal::Config::default().with_cpu_clock(esp_hal::clock::CpuClock::max())
     });
-    esp_alloc::heap_allocator!(72 * 1024);
+    esp_alloc::heap_allocator!(size: 72 * 1024);
     let timg0 = TimerGroup::new(peripherals.TIMG0);
 
     let init = esp_wifi::init(

@@ -2,7 +2,6 @@
 #![no_main]
 use embassy_sync::channel::{Channel, Sender};
 use esp_hal::time::Rate;
-use static_cell::StaticCell;
 
 use embassy_executor::Spawner;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
@@ -10,9 +9,9 @@ use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_time::Timer;
 
 use esp_hal::spi::{master::Config, master::Spi, Mode};
-use esp_hal::uart::{UartRx, UartTx, IoError, RxError, TxError, RxConfig};
+use esp_hal::uart::{UartRx, UartTx};
 use esp_hal::Async;
-use esp_hal::{timer::timg::TimerGroup};
+use esp_hal::timer::timg::TimerGroup;
 
 
 use lora_phy::iv::GenericSx126xInterfaceVariant;
