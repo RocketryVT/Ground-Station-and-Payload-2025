@@ -8,10 +8,10 @@ use num_traits::Float;
 // Rust 
 use static_cell::StaticCell;
 use Mesh::protocol::{APRSGPSFix, AllSensorData, AprsCompressedPositionReport, CompressionOrigin, CompressionType, NMEASource, SensorUpdate};
+use LSM6DSO32::Lsm6dso32;
 use core::f32::consts::SQRT_2;
 
 use postcard::to_vec;
-use heapless::Vec;
 
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use embedded_sdmmc::{SdCard, TimeSource, Timestamp};
@@ -36,7 +36,7 @@ use ublox::{PacketRef, Parser};
 
 use ism330dhcx::*;
 use UBLOX_rs;
-use LSM6DSO32::*;
+// use LSM6DSO32::*;
 use ADXL375::{Adxl375, BandWidth as ADXL375BandWidth, PowerMode as ADXL375PowerMode};
 use bmp390::*;
 // use controls::*;
@@ -174,9 +174,57 @@ async fn main(spawner: Spawner) {
     
     // I2C0 Tasks (BMP390, ISM330DHCX, LSM6DSO32)
     // I2C Address for BMP390 is 0x6A
-    spawner.spawn(ism330dhcx_task(i2c0_bus, CHANNEL.sender())).unwrap();
+
+    let ism_options = ism330dhcx::Options { 
+        device: ism330dhcx::DeviceOptions { 
+            set_boot: true, 
+            set_bdu: true,
+            set_if_inc: true,
+        },
+        dimension: ism330dhcx::DimensionOptions {
+            set_den_x: true,
+            set_den_y: true,
+            set_den_z: true,
+        },
+        acceleromter: ism330dhcx::AccelerometerOptions {
+            accelerometer_rate: ism330dhcx::ctrl1xl::Odr_Xl::Hz26,
+            accelerometer_range: ism330dhcx::ctrl1xl::Fs_Xl::G4,
+            enable_low_pass_filter: false,
+        },
+        gyro: ism330dhcx::GyroOptions {
+            gyro_rate:ism330dhcx::ctrl2g::Odr::Hz26,
+            gyro_range: ism330dhcx::ctrl2g::Fs::Dps500,
+        },
+        disable_high_performance: false
+    };
+
+    let lsm_options = LSM6DSO32::Options {
+        device: LSM6DSO32::DeviceOptions {
+            set_boot: true,
+            set_bdu: true,
+            set_if_inc: true,
+            disable_i3c: true,
+        },
+        dimension: LSM6DSO32::DimensionOptions {
+            set_den_x: true,
+            set_den_y: true,
+            set_den_z: true,
+        },
+        acceleromter: LSM6DSO32::AccelerometerOptions {
+            accelerometer_rate: LSM6DSO32::ctrl1_xl::Odr_Xl::Hz26,
+            accelerometer_range: LSM6DSO32::ctrl1_xl::Fs_Xl::G32,
+            enable_low_pass_filter: false,
+        },
+        gyro: LSM6DSO32::GyroOptions {
+            gyro_rate: LSM6DSO32::ctrl2_g::Odr::Hz26,
+            gyro_range: LSM6DSO32::ctrl2_g::Fs::Dps500,
+        },
+        disable_high_performance: false,
+    };
+
+    spawner.spawn(ism330dhcx_task(i2c0_bus, ism_options, CHANNEL.sender())).unwrap();
     // I2C Address for LSM6DSO32 is 0x6B
-    spawner.spawn(lsm6dso32_task(i2c0_bus, CHANNEL.sender())).unwrap();
+    spawner.spawn(lsm6dso32_task(i2c0_bus, lsm_options, CHANNEL.sender())).unwrap();
     // I2C Address for BMP390 is 0x77
     spawner.spawn(bmp390_task(i2c0_bus, CHANNEL.sender())).unwrap();
     
@@ -776,10 +824,34 @@ async fn error_task(msg: &'static str) {
 async fn ism330dhcx_task2(i2c_bus: &'static I2c1Bus, sender: Sender<'static, ThreadModeRawMutex, SensorUpdate, 10>) {
     let mut i2c_dev = I2cDevice::new(i2c_bus);
     // Set up ISM330DHCX
-    let mut sensor = Ism330Dhcx::new_with_address(&mut i2c_dev, 0x6Au8)
+    let mut sensor = Ism330Dhcx::new_with_address(
+        &mut i2c_dev, 
+        0x6Au8,
+        ism330dhcx::Options { 
+            device: ism330dhcx::DeviceOptions { 
+                set_boot: true, 
+                set_bdu: true,
+                set_if_inc: true,
+            },
+            dimension: ism330dhcx::DimensionOptions {
+                set_den_x: true,
+                set_den_y: true,
+                set_den_z: true,
+            },
+            acceleromter: ism330dhcx::AccelerometerOptions {
+                accelerometer_rate: ism330dhcx::ctrl1xl::Odr_Xl::Hz26,
+                accelerometer_range: ism330dhcx::ctrl1xl::Fs_Xl::G16,
+                enable_low_pass_filter: false,
+            },
+            gyro: ism330dhcx::GyroOptions {
+                gyro_rate:ism330dhcx::ctrl2g::Odr::Hz26,
+                gyro_range: ism330dhcx::ctrl2g::Fs::Dps500,
+            },
+            disable_high_performance: false
+        }
+    )
         .await
         .expect("Error initializing ISM330DHCX");
-    boot_sensor(&mut sensor, &mut i2c_dev).await;
 
     loop {
         let _measurement = sensor.get_measurement(&mut i2c_dev).await.unwrap();
@@ -799,13 +871,16 @@ async fn ism330dhcx_task2(i2c_bus: &'static I2c1Bus, sender: Sender<'static, Thr
     }
 }
 #[embassy_executor::task]
-async fn ism330dhcx_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, ThreadModeRawMutex, SensorUpdate, 10>) {
+async fn ism330dhcx_task(i2c_bus: &'static I2c0Bus, ism_options: ism330dhcx::Options, sender: Sender<'static, ThreadModeRawMutex, SensorUpdate, 10>) {
     let mut i2c_dev = I2cDevice::new(i2c_bus);
     // Set up ISM330DHCX
-    let mut sensor = Ism330Dhcx::new_with_address(&mut i2c_dev, 0x6Au8)
+    let mut sensor = Ism330Dhcx::new_with_address(
+        &mut i2c_dev, 
+        0x6Au8,
+        ism_options
+    )
         .await
         .expect("Error initializing ISM330DHCX");
-    boot_sensor(&mut sensor, &mut i2c_dev).await;
 
     loop {
         let _measurement = sensor.get_measurement(&mut i2c_dev).await.unwrap();
@@ -826,11 +901,11 @@ async fn ism330dhcx_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, Thre
 }
 
 #[embassy_executor::task]
-async fn lsm6dso32_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, ThreadModeRawMutex, SensorUpdate, 10>) {
+async fn lsm6dso32_task(i2c_bus: &'static I2c0Bus, options: LSM6DSO32::Options, sender: Sender<'static, ThreadModeRawMutex, SensorUpdate, 10>) {
     let mut i2c_dev = I2cDevice::new(i2c_bus);
 
     // Set up LSM6DSO32
-    let mut sensor = match Lsm6dso32::new_with_address(&mut i2c_dev, 0x6Bu8).await {
+    let mut sensor = match Lsm6dso32::new_with_address(&mut i2c_dev, 0x6Bu8, options).await {
         Ok(sensor) => sensor,
         Err(error) => loop {
             info!("{:?}", error);
@@ -838,7 +913,6 @@ async fn lsm6dso32_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, Threa
             Timer::after_millis(1000).await;
         },
     };
-    boot_sensor_lsm6dso32(&mut sensor, &mut i2c_dev).await;
     loop {
         let _measurement = sensor.get_measurement(&mut i2c_dev).await.unwrap();
         sender.send(SensorUpdate::LSM6DSO32(
@@ -853,120 +927,6 @@ async fn lsm6dso32_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, Threa
         )).await;
         Timer::after_millis(40).await; // 40 milliseconds delay for 25 Hz
     }
-}
-
-// Booting the sensor accoring to Adafruit's driver
-async fn boot_sensor<I2C>(sensor: &mut Ism330Dhcx, i2c: &mut I2C)
-where
-    I2C: embedded_hal_async::i2c::I2c,
-{
-    // =======================================
-    // CTRL3_C
-
-    sensor.ctrl3c.set_boot(i2c, true).await.unwrap();
-    sensor.ctrl3c.set_bdu(i2c, true).await.unwrap();
-    sensor.ctrl3c.set_if_inc(i2c, true).await.unwrap();
-
-    // =======================================
-    // CTRL9_XL
-
-    sensor.ctrl9xl.set_den_x(i2c, true).await.unwrap();
-    sensor.ctrl9xl.set_den_y(i2c, true).await.unwrap();
-    sensor.ctrl9xl.set_den_z(i2c, true).await.unwrap();
-    sensor.ctrl9xl.set_device_conf(i2c, true).await.unwrap();
-
-    // =======================================
-    // CTRL1_XL
-
-    sensor
-        .ctrl1xl
-        .set_accelerometer_data_rate(i2c, ctrl1xl::Odr_Xl::Hz26)
-        .await
-        .unwrap();
-
-    sensor
-        .ctrl1xl
-        .set_chain_full_scale(i2c, ctrl1xl::Fs_Xl::G4)
-        .await
-        .unwrap();
-    sensor.ctrl1xl.set_lpf2_xl_en(i2c, false).await.unwrap();
-
-    // =======================================
-    // CTRL2_G
-
-    sensor
-        .ctrl2g
-        .set_gyroscope_data_rate(i2c, ctrl2g::Odr::Hz26)
-        .await
-        .unwrap();
-
-    sensor
-        .ctrl2g
-        .set_chain_full_scale(i2c, ctrl2g::Fs::Dps500)
-        .await
-        .unwrap();
-
-    // =======================================
-    // CTRL7_G
-
-    sensor.ctrl7g.set_g_hm_mode(i2c, false).await.unwrap();
-}
-
-async fn boot_sensor_lsm6dso32<I2C>(sensor: &mut Lsm6dso32, i2c: &mut I2C)
-where
-    I2C: embedded_hal_async::i2c::I2c,
-{
-    // =======================================
-    // CTRL3_C
-
-    sensor.ctrl3c.set_boot(i2c, true).await.unwrap();
-    sensor.ctrl3c.set_bdu(i2c, true).await.unwrap();
-    sensor.ctrl3c.set_if_inc(i2c, true).await.unwrap();
-
-    // =======================================
-    // CTRL9_XL
-
-    sensor.ctrl9xl.set_den_x(i2c, true).await.unwrap();
-    sensor.ctrl9xl.set_den_y(i2c, true).await.unwrap();
-    sensor.ctrl9xl.set_den_z(i2c, true).await.unwrap();
-    sensor.ctrl9xl.set_i3c_disable(i2c, true).await.unwrap();
-
-    // =======================================
-    // CTRL1_XL
-
-    sensor
-        .ctrl1xl
-        .set_accelerometer_data_rate(i2c, ctrl1_xl::Odr_Xl::Hz26)
-        .await
-        .unwrap();
-
-    sensor
-        .ctrl1xl
-        .set_chain_full_scale(i2c, ctrl1_xl::Fs_Xl::G32)
-        .await
-        .unwrap();
-    sensor.ctrl1xl.set_lpf2_xl_en(i2c, false).await.unwrap();
-
-    // =======================================
-    // CTRL2_G
-
-    sensor
-        .ctrl2g
-        .set_gyroscope_data_rate(i2c, ctrl2_g::Odr::Hz26)
-        .await
-        .unwrap();
-
-    sensor
-        .ctrl2g
-        .set_chain_full_scale(i2c, ctrl2_g::Fs::Dps500)
-        .await
-        .unwrap();
-
-    // =======================================
-    // CTRL7_G
-
-    sensor.ctrl7g.set_g_hm_mode(i2c, false).await.unwrap();
-
 }
 
 /// Calculate the speed of sound at a given altitude in meters.
