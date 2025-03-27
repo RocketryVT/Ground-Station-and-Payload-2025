@@ -1,8 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>main.qml</file>
-    </qresource>
-    <qresource prefix="/web">
-        <file alias="index.html">web/index.html</file>
-    </qresource>
-</RCC>
