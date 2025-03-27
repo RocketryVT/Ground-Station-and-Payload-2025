@@ -1,0 +1,93 @@
+[package]
+name = "esp32"
+version = "0.1.0"
+authors = ["Gregory Wainer <greg.wainer@gmail.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+
+defmt = "0.3"
+defmt-rtt = "0.4"
+bytemuck = { version = "1.21", features = ["derive"] }
+
+embassy-executor    = { version = "0.7", features = ["task-arena-size-12288"] }
+embassy-futures = "0.1"
+embassy-sync = { version = "0.6" }
+embassy-time        = { version = "0.4" , features = ["generic-queue-8"] }
+embassy-usb         = { version = "0.4", default-features = false }
+embassy-embedded-hal = "0.3"
+embedded-hal-async = "1.0"
+embedded-io-async ={ version = "0.6", default-features = false }
+embedded-hal = "1.0"
+embedded-hal-bus = { version = "0.3", features = ["async"]}
+#embedded-can        = "0.4.1"
+#embedded-graphics   = "0.8.1"
+#embedded-io         = { version = "0.6.1", default-features = false }
+#embedded-io-async   = "0.6.1"
+#embedded-storage    = "0.3.1"
+
+# esp-alloc = {  version = "0.7" }
+esp-alloc = { git = "https://github.com/esp-rs/esp-hal.git" }
+esp-backtrace = { version = "0.15", features = [
+    "exception-handler",
+    "panic-handler",
+    "println",
+] }
+esp-hal = {  features = ["log", "unstable" ], git = "https://github.com/esp-rs/esp-hal.git"}
+esp-hal-embassy = {  features = [], git = "https://github.com/esp-rs/esp-hal.git"} # "integrated-timers"
+esp-println = { version = "0.13", features = ["log"] }
+esp-storage = { version = "0.5", features = [] }
+esp-wifi = { features = ["log", "esp-alloc", "ble"], git="https://github.com/esp-rs/esp-hal.git" }
+bt-hci = { version = "0.2" }
+trouble-host = { git="https://github.com/embassy-rs/trouble.git", rev="b6694cf00b602efe9c1c6e639e97218ebf623479" }
+bitflags ={ version = "2.9"}
+
+fugit = "0.3"
+heapless = "0.7"
+log = "0.4"
+static_cell = "2.1"
+usb-device = "0.3"
+usbd-serial = "0.2"
+
+postcard = { version = "1" }
+serde = { version = "1.0", features = ["derive"], default-features = false}
+byteorder ={ version = "1.5", default-features = false }
+num-traits = { version = "0.2", default-features = false, features = ["libm"]}
+
+# Sensor Drivers
+ublox = { version = "0.4", default-features = false}
+UBLOX_rs = { path ="../libs/UBLOX-rs" }
+chrono = { version = "0.4", default-features = false}
+chrono-tz = { version = "0.10", default-features = false}
+
+# Lora Drivers
+lora-modulation = "0.1"
+lora-phy = { git = "https://github.com/lora-rs/lora-rs.git"}
+dummy-pin = "1.0"
+
+Mesh = { path = "../libs/Mesh" }
+ssd1306 = "0.10"
+embedded-graphics = "0.8"
+
+[features]
+default = ["esp32"]
+esp32 = ["esp-hal/esp32", "esp-hal-embassy/esp32", "esp-println/esp32", "esp-backtrace/esp32", "esp-storage/esp32", "esp-wifi/esp32"]
+
+[build-dependencies]
+embuild = "0.33"
+
+[profile.dev]
+# Rust debug is too slow.
+# For debug builds always builds with some optimization
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1 # LLVM can perform better optimizations using a single thread
+debug = 2
+debug-assertions = false
+incremental = false
+lto = 'fat'
+#opt-level = 's'
+opt-level = 3
+overflow-checks = false

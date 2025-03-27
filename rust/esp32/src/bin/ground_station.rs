@@ -135,38 +135,16 @@ async fn main(_spawner: Spawner) {
 
     println!("Init");
 
-    let (lora_nss, lora_sck, lora_mosi, lora_miso, lora_rst, _lora_busy, lora_dio0) = {
-        #[cfg(feature = "esp32")]
-        {
-            let output_config = esp_hal::gpio::OutputConfig::default();
-            let input_config = esp_hal::gpio::InputConfig::default()
-                .with_pull(esp_hal::gpio::Pull::None);
-            (
-                esp_hal::gpio::Output::new(peripherals.GPIO4, esp_hal::gpio::Level::High, output_config),
-                peripherals.GPIO18,
-                peripherals.GPIO23,
-                peripherals.GPIO19,
-                esp_hal::gpio::Output::new(peripherals.GPIO5, esp_hal::gpio::Level::High, output_config),
-                esp_hal::gpio::Input::new(peripherals.GPIO22, input_config),
-                esp_hal::gpio::Input::new(peripherals.GPIO21, input_config),
-            )
-        }
-        #[cfg(not(feature = "esp32"))]
-        {
-            let output_config = esp_hal::gpio::OutputConfig::default();
-            let input_config = esp_hal::gpio::InputConfig::default()
-                .with_pull(esp_hal::gpio::Pull::None);
-            (
-                esp_hal::gpio::Output::new(peripherals.GPIO8, esp_hal::gpio::Level::High, output_config),
-                peripherals.GPIO9,
-                peripherals.GPIO10,
-                peripherals.GPIO11,
-                esp_hal::gpio::Output::new(peripherals.GPIO12, esp_hal::gpio::Level::High, output_config),
-                esp_hal::gpio::Input::new(peripherals.GPIO13, input_config),
-                esp_hal::gpio::Input::new(peripherals.GPIO14, input_config),
-            )
-        }
-    };
+    let output_config = esp_hal::gpio::OutputConfig::default();
+    let input_config = esp_hal::gpio::InputConfig::default()
+        .with_pull(esp_hal::gpio::Pull::None);
+    let lora_nss = esp_hal::gpio::Output::new(peripherals.GPIO4, esp_hal::gpio::Level::High, output_config);
+    let lora_sck = peripherals.GPIO18;
+    let lora_mosi = peripherals.GPIO23;
+    let lora_miso = peripherals.GPIO19;
+    let lora_rst = esp_hal::gpio::Output::new(peripherals.GPIO5, esp_hal::gpio::Level::High, output_config);
+    let _lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO22, input_config);
+    let lora_dio0 = esp_hal::gpio::Input::new(peripherals.GPIO21, input_config);
 
     // Enable the fan
     let mut fan_gpio = esp_hal::gpio::Output::new(peripherals.GPIO2, esp_hal::gpio::Level::Low, esp_hal::gpio::OutputConfig::default());

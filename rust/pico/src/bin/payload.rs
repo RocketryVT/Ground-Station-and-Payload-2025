@@ -403,6 +403,7 @@ fn compress_altitude(altitude: f64) -> [u8; 2] {
     altitude_bytes
 }
 
+#[allow(dead_code)]
 fn decompress_altitude(cs_bytes: [u8; 2]) -> f64 {
     // Decode the base-91 value from the two bytes
     let c = cs_bytes[0] as u16 - 33;  // Subtract 33 from ASCII values
@@ -645,10 +646,10 @@ async fn gps_task(i2c_bus: &'static I2c1Bus, sender: Sender<'static, ThreadModeR
                         valid: message.valid().bits(),
                     };
                 }
-                Some(Ok(packet)) => {
+                Some(Ok(_packet)) => {
                     //info!("Packet: {:?}", packet);
                 }
-                Some(Err(e)) => {
+                Some(Err(_e)) => {
                     // Received a malformed packet
                     //info!("Error: {:?}", e);
                 }
@@ -666,6 +667,7 @@ async fn gps_task(i2c_bus: &'static I2c1Bus, sender: Sender<'static, ThreadModeR
                 num_sats: num_satellites,
                 fix_type: fix_type,
                 utc_time: time,
+                sats_data
             })).await;
 
             // 250 ms is the minimal recommended delay between reading data on I2C, UART is 1100 ms.

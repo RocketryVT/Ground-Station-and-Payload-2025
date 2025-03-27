@@ -14,20 +14,20 @@
 	path = old/freeRTOS-payload/include/FreeRTOS-Kernel
 	url = https://github.com/raspberrypi/FreeRTOS-Kernel
 [submodule "libs/LSM6DSO32"]
-	path = libs/LSM6DSO32
+	path = rust/libs/LSM6DSO32
 	url = https://github.com/RocketryVT/LSM6DSO32.git
 [submodule "libs/ADXL375"]
-	path = libs/ADXL375
+	path = rust/libs/ADXL375
 	url = https://github.com/RocketryVT/ADXL375.git
 [submodule "libs/ISM330DHCX"]
-	path = libs/ISM330DHCX
+	path = rust/libs/ISM330DHCX
 	url = https://github.com/RocketryVT/ISM330DHCX.git
 [submodule "libs/Controls"]
-	path = libs/Controls
+	path = rust/libs/Controls
 	url = https://github.com/RocketryVT/Controls.git
 [submodule "libs/Mesh"]
-	path = libs/Mesh
+	path = rust/libs/Mesh
 	url = https://github.com/RocketryVT/Mesh.git
 [submodule "libs/UBLOX-rs"]
-	path = libs/UBLOX-rs
+	path = rust/libs/UBLOX-rs
 	url = https://github.com/RocketryVT/UBLOX-rs.git
