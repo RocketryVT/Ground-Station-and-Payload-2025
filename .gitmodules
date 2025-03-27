@@ -1,18 +1,3 @@
-[submodule "old/payload/include/pico-sdk"]
-	path = old/payload/include/pico-sdk
-	url = https://github.com/raspberrypi/pico-sdk
-[submodule "old/payload/include/eigen"]
-	path = old/payload/include/eigen
-	url = https://gitlab.com/libeigen/eigen.git
-[submodule "old/freeRTOS-payload/include/picotool"]
-	path = old/freeRTOS-payload/include/picotool
-	url = https://github.com/raspberrypi/picotool
-[submodule "old/freeRTOS-payload/include/pico-sdk"]
-	path = old/freeRTOS-payload/include/pico-sdk
-	url = https://github.com/raspberrypi/pico-sdk.git
-[submodule "old/freeRTOS-payload/include/FreeRTOS-Kernel"]
-	path = old/freeRTOS-payload/include/FreeRTOS-Kernel
-	url = https://github.com/raspberrypi/FreeRTOS-Kernel
 [submodule "libs/LSM6DSO32"]
 	path = libs/LSM6DSO32
 	url = https://github.com/RocketryVT/LSM6DSO32.git
