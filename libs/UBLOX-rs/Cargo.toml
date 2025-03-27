@@ -1,0 +1,42 @@
+[package]
+authors = ["Gregory Wainer"]
+categories = ["embedded", "hardware-support", "no-std"]
+description = "Driver for UBLOX NEO-M9N GPS"
+documentation = "https://docs.rs/UBLOX-rs"
+edition = "2021"
+include = ["src/", "LICENSE-*", "README.md", "CHANGELOG.md", "COPYRIGHT"]
+keywords = [
+    "i2c",
+    "embedded-hal-driver",
+    "UBLOX NEO-M9N",
+    "gps",
+]
+license = "MIT"
+build = false
+autolib = false
+autobins = false
+autoexamples = false
+autotests = false
+autobenches = false
+name = "UBLOX_rs"
+readme = "README.md"
+repository = "https://github.com/RocketryVT/UBLOX-rs"
+version = "0.0.1"
+
+[lib]
+name = "UBLOX_rs"
+path = "src/lib.rs"
+
+[dependencies]
+embassy-time = "0.4"
+embedded-hal = "1.0"
+embedded-hal-async = "1.0"
+embedded-io = "0.6"
+embedded-io-async = "0.6"
+libm = "0.2"
+uom = { version="0.36", features = ["f32", "si", "autoconvert"],  default-features = false}
+defmt = { version = "0.3" }
+ublox = { version = "0.4", default-features = false}
+# embedded-hal-mock = { version = "0.11", features = ["eh1", "embedded-hal-async"], default-features = false}
+
+[dev-dependencies]

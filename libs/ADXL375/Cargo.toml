@@ -1,0 +1,29 @@
+[package]
+authors = ["Gregory Wainer"]
+categories = ["embedded", "hardware-support", "no-std"]
+description = "Driver for ADXL375 accelerometer"
+documentation = "https://docs.rs/ADXL375"
+edition = "2021"
+include = ["src/", "LICENSE-*", "README.md", "CHANGELOG.md", "COPYRIGHT"]
+keywords = [
+    "i2c",
+    "embedded-hal-driver",
+    "ADXL375",
+    "accelerometer",
+]
+license = "MIT"
+name = "ADXL375"
+readme = "README.md"
+repository = "https://github.com/RocketryVT/ADXL375"
+version = "0.0.1"
+
+[dependencies]
+defmt = "0.3"
+embedded-hal = "1.0.0"
+embedded-hal-async ={ version = "1.0" }
+embedded-io = "0.6.1"
+embedded-io-async = "0.6.1"
+
+[dev-dependencies]
+approx = "0.5.1"
+embedded-hal-mock = "0.11"
