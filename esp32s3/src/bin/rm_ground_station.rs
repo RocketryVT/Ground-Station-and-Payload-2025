@@ -66,7 +66,7 @@
 /// | passthrough_baud       | 230400    | |
 /// | led_red                | 15        | |
 /// | led_red_invert         | true      | |
-/// | misc_fan_en            | 2         | There is no fan present on the Micro so idk why this is here? |
+/// | misc_fan_en            | 2         | |
 /// | screen_type            | 1         | SSD1306 128x64 |
 /// | screen_sck             | 12        | |
 /// | screen_sda             | 14        | |
@@ -117,9 +117,7 @@ use esp_hal::time::Rate;
 use esp_println::println;
 
 use esp_backtrace as _;
-use esp_hal::{
-    timer::timg::TimerGroup,
-};
+use esp_hal::timer::timg::TimerGroup;
 
 use lora_phy::iv::GenericSx127xInterfaceVariant;
 use lora_phy::sx127x::{self, Sx127x, Sx1276};
@@ -136,35 +134,6 @@ async fn main(_spawner: Spawner) {
     esp_hal_embassy::init(timg0.timer0);
 
     println!("Init");
-
-    // #[cfg(feature = "esp32")] {
-    //     let output_config = esp_hal::gpio::OutputConfig::default();
-    //     let input_config = esp_hal::gpio::InputConfig::default()
-    //         .with_pull(esp_hal::gpio::Pull::None);
-    //     let lora_nss = esp_hal::gpio::Output::new(peripherals.GPIO4, esp_hal::gpio::Level::High, output_config);
-    //     let lora_sck = peripherals.GPIO18;
-    //     let lora_mosi = peripherals.GPIO23;
-    //     let lora_miso = peripherals.GPIO19;
-    //     let lora_rst = esp_hal::gpio::Output::new(peripherals.GPIO5, esp_hal::gpio::Level::High, output_config);
-    //     // let lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO13, esp_hal::gpio::Pull::None);
-    //     let lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO22, input_config);
-    //     let lora_dio1 = esp_hal::gpio::Input::new(peripherals.GPIO21, input_config);
-    //     // let lora_ant = dummy_pin::DummyPin::new_high();
-    // }
-    // #[cfg(not(feature = "esp32"))] {
-    //     // According to Heltec V32 Page
-    //     let output_config = esp_hal::gpio::OutputConfig::default();
-    //     let input_config = esp_hal::gpio::InputConfig::default()
-    //         .with_pull(esp_hal::gpio::Pull::None);
-    //     let lora_nss = esp_hal::gpio::Output::new(peripherals.GPIO8, esp_hal::gpio::Level::High, output_config);
-    //     let lora_sck = peripherals.GPIO9;
-    //     let lora_mosi = peripherals.GPIO10;
-    //     let lora_miso = peripherals.GPIO11;
-    //     let lora_rst = esp_hal::gpio::Output::new(peripherals.GPIO12, esp_hal::gpio::Level::High, output_config);
-    //     let lora_busy = esp_hal::gpio::Input::new(peripherals.GPIO13, input_config);
-    //     let lora_dio1 = esp_hal::gpio::Input::new(peripherals.GPIO14, input_config);
-    //     // let lora_ant = dummy_pin::DummyPin::new_high();
-    // }
 
     let (lora_nss, lora_sck, lora_mosi, lora_miso, lora_rst, _lora_busy, lora_dio0) = {
         #[cfg(feature = "esp32")]
@@ -199,10 +168,14 @@ async fn main(_spawner: Spawner) {
         }
     };
 
+    // Enable the fan
+    let mut fan_gpio = esp_hal::gpio::Output::new(peripherals.GPIO2, esp_hal::gpio::Level::Low, esp_hal::gpio::OutputConfig::default());
+    fan_gpio.set_high();
+
     println!("Init LoRa");
 
     let config = Config::default()
-        .with_frequency(Rate::from_khz(100))
+        .with_frequency(Rate::from_mhz(10))
         .with_mode(Mode::_0);
     let spi2 = Spi::new(peripherals.SPI2, config)
         .unwrap()

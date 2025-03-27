@@ -71,10 +71,9 @@ ssd1306 = "0.10"
 embedded-graphics = "0.8"
 
 [features]
-default = ["esp32s3"]
+# default = ["esp32s3"]
 esp32 = ["esp-hal/esp32", "esp-hal-embassy/esp32", "esp-println/esp32", "esp-backtrace/esp32", "esp-storage/esp32", "esp-wifi/esp32"]
 esp32s3 = ["esp-hal/esp32s3", "esp-hal-embassy/esp32s3", "esp-println/esp32s3", "esp-backtrace/esp32s3", "esp-storage/esp32s3", "esp-wifi/esp32s3"]
-rm_ground_station = ["esp32"]
 
 [build-dependencies]
 embuild = "0.33"
@@ -93,3 +92,8 @@ lto = 'fat'
 #opt-level = 's'
 opt-level = 3
 overflow-checks = false
+
+[[bin]]
+name = "rm_ground_station"
+path = "src/bin/rm_ground_station.rs"
+required-features = ["esp32"]

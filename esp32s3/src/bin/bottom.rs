@@ -140,14 +140,16 @@ async fn main(spawner: Spawner) {
         }
     }
 
-    let mut aprs_report = AprsCompressedPositionReport::default();
-    aprs_report.comment.uid = 2;
-    aprs_report.comment.destination_uid = 0;
-    aprs_report.comment.msg_id = 0;
-    aprs_report.comment.hops_left = 3;
-    aprs_report.comment.comment_type = Mesh::protocol::DeviceType::Bottom;
-    aprs_report.comment.msg_type = Mesh::protocol::MessageType::Data;
-    aprs_report.comment.team_number = 190;
+    // let mut aprs_report = AprsCompressedPositionReport::default();
+    // aprs_report.comment.uid = 2;
+    // aprs_report.comment.destination_uid = 0;
+    // aprs_report.comment.msg_id = 0;
+    // aprs_report.comment.hops_left = 3;
+    // aprs_report.comment.comment_type = Mesh::protocol::DeviceType::Bottom;
+    // aprs_report.comment.msg_type = Mesh::protocol::MessageType::Data;
+    // aprs_report.comment.team_number = 190;
+
+    let mut nav_sat = Mesh::protocol::NavSat::default();
 
     let mut sensor_data = AllSensorData { 
         ism330dhcx: None,
@@ -177,17 +179,29 @@ async fn main(spawner: Spawner) {
         }
 
         match sensor_data.gps {
-            Some(gps) => {
-                aprs_report.lat = gps.latitude;
-                aprs_report.lon = gps.longitude;
-                aprs_report.alt = gps.altitude;
+            Some(ref gps) => {
+                // aprs_report.lat = gps.latitude;
+                // aprs_report.lon = gps.longitude;
+                // aprs_report.alt = gps.altitude;
+                nav_sat = gps.sats_data;
             }
             None => {}
         };
 
-        println!("Sending APRS Report: {:?}", aprs_report);
+        // println!("Sending APRS Report: {:?}", aprs_report);
 
-        let buffer: heapless::Vec<u8, 96> = match postcard::to_vec(&aprs_report) {
+        // let buffer: heapless::Vec<u8, 96> = match postcard::to_vec(&aprs_report) {
+        //     Ok(b) => b,
+        //     Err(err) => {
+        //         println!("Serialization error = {:?}", err);
+        //         heapless::Vec::new()
+        //     }
+        // };
+
+        println!("Sending NavSat: {:?}", nav_sat);
+
+
+        let buffer: heapless::Vec<u8, 840> = match postcard::to_vec(&nav_sat) {
             Ok(b) => b,
             Err(err) => {
                 println!("Serialization error = {:?}", err);
@@ -223,7 +237,7 @@ async fn main(spawner: Spawner) {
         //     Err(err) => println!("Sleep unsuccessful = {:?}", err),
         // }
         
-        aprs_report.comment.msg_id += 1;
+        // aprs_report.comment.msg_id += 1;
 
         Timer::after_secs(1).await;
     }
@@ -269,6 +283,10 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
         Ok(()) => println!("UBX TIME UTC enabled"),
         Err(e) => println!("Failed to enable UBX TIME UTC: {:?}", e),
     }
+    match gps.enable_i2c_ubx_nav_sat().await {
+        Ok(()) => println!("UBX NAV SAT enabled"),
+        Err(e) => println!("Failed to enable UBX NAV SAT: {:?}", e),
+    }
     Timer::after_millis(500).await; // Wait for the GPS to start sending data (Ideally, the library should handle this but this will do for now)
 
     println!("GPS initialized");
@@ -289,6 +307,7 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
         let mut num_satellites = 0;
         let mut fix_type: Mesh::protocol::GpsFix = Default::default();
         let mut time: Mesh::protocol::UTC = Default::default();
+        let mut sats_data: Mesh::protocol::NavSat = Default::default();
 
         let data = match gps.get_data().await {
             Ok(Some(data)) => data,
@@ -347,12 +366,59 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
                         valid: message.valid().bits(),
                     };
                 }
+                Some(Ok(PacketRef::NavSat(message))) => {
+                    println!("Satellite: {:?}", message);
+                    // itor: GPS Time of Week
+                    // version: Message version
+                    // num_svs: Number of satellites 
+                    // svs: Satellite data array.
+                    // message.svs().for_each(|sv| {
+                    //     println!("Satellite: {:?}", sv);
+                    //     sv.cno();
+                    // });
+                    sats_data = Mesh::protocol::NavSat {
+                        itow: message.itow(),
+                        version: message.version(),
+                        num_svs: message.num_svs(),
+                        svs: {
+                        let mut array = [None; 32]; // Initialize a fixed-size array with `None`
+                        for (i, sv) in message.svs().take(32).enumerate() {
+                            array[i] = Some(Mesh::protocol::NavSatSvInfo {
+                                gnss_id: sv.gnss_id(),
+                                sv_id: sv.sv_id(),
+                                cno: sv.cno(),
+                                elev: sv.elev(),
+                                azim: sv.azim(),
+                                pr_res: sv.pr_res(),
+                                flags: Mesh::protocol::NavSatSvFlags { 
+                                    quality_ind: sv.flags().quality_ind().into(),
+                                    sv_used: sv.flags().sv_used(),
+                                    health: sv.flags().health().into(),
+                                    differential_correction_available: sv.flags().differential_correction_available(),
+                                    smoothed: sv.flags().smoothed(),
+                                    orbit_sources: sv.flags().orbit_source().into(),
+                                    ephemeris_available: sv.flags().ephemeris_available(),
+                                    almanac_available: sv.flags().almanac_available(),
+                                    an_offline_available: sv.flags().an_offline_available(),
+                                    an_auto_available: sv.flags().an_auto_available(),
+                                    sbas_corr: sv.flags().sbas_corr(),
+                                    rtcm_corr: sv.flags().rtcm_corr(),
+                                    slas_corr: sv.flags().slas_corr(),
+                                    spartn_corr: sv.flags().spartn_corr(),
+                                    pr_corr: sv.flags().pr_corr(),
+                                    cr_corr: sv.flags().cr_corr(),
+                                    do_corr: sv.flags().do_corr(),
+                                },
+                            });
+                        }
+                    array}};
+                }
                 Some(Ok(_packet)) => {
-                    //println!("Packet: {:?}", packet);
+                    println!("Packet: {:?}", _packet);
                 }
                 Some(Err(_e)) => {
                     // Received a malformed packet
-                    //println!("Error: {:?}", e);
+                    println!("Error: {:?}",_e);
                 }
                 None => {
                     // The internal buffer is now empty
@@ -368,6 +434,7 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
                 num_sats: num_satellites,
                 fix_type: fix_type,
                 utc_time: time,
+                sats_data,
             })).await;
 
             // 250 ms is the minimal recommended delay between reading data on I2C, UART is 1100 ms.

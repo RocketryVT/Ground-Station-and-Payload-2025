@@ -19,7 +19,7 @@ use lora_phy::{LoRa, RxMode};
 
 const RF_FREQUENCY: u32 = 905_200_000;
 
-use Mesh::protocol::AprsCompressedPositionReport;
+use Mesh::protocol::{AprsCompressedPositionReport, NavSat};
 use postcard::from_bytes;
 use num_traits::Float;
 
@@ -80,7 +80,7 @@ async fn main(_spawner: Spawner) {
     let mut lora = LoRa::with_syncword(Sx126x::new(&mut device, iv, config), 0x12, embassy_time::Delay).await.unwrap();
 
     // Lora has a max packet size of 256 bytes
-    let mut receiving_buffer = [00u8; 256];
+    let mut receiving_buffer = [00u8; 4096];
 
     let mdltn_params = {
         match lora.create_modulation_params(
@@ -121,26 +121,28 @@ async fn main(_spawner: Spawner) {
     println!("Start RX");
 
     loop {
-        receiving_buffer = [00u8; 256];
+        receiving_buffer = [00u8; 4096];
         match lora.rx(&rx_pkt_params, &mut receiving_buffer).await {
             Ok((received_len, _rx_pkt_status)) => {
                 let received_data = &receiving_buffer[..received_len as usize];
-                println!("{:?}", received_data);
-                println!("Received data length: {}", received_len);
-                let data: Result<AprsCompressedPositionReport, _> = from_bytes(received_data);
+                // println!("{:?}", received_data);
+                // println!("Received data length: {}", received_len);
+                // let data: Result<AprsCompressedPositionReport, _> = from_bytes(received_data);
+                let data: Result<Mesh::protocol::NavSat, _> = from_bytes(received_data);
                 match data {
                     Ok(report) => {
                         // println!("Received data: {:?}", report);
                         // let (latitude, longitude) = decompress_lat_lon(report.compressed_lat, report.compressed_long);
                         // let altitude = decompress_altitude(report.compressed_altitude);
                         // println!("Received data: lat: {}, lon: {}, alt: {}", latitude, longitude, altitude);
-                        let full_lat = report.lat;
-                        let full_lon = report.lon;
-                        let full_alt = report.alt;
-                        let device_type = report.comment.comment_type;
-                        let device_id = report.comment.uid;
-                        let message_num = report.comment.msg_id;
-                        println!("Received data: lat: {}, lon: {}, alt: {}, device_type: {:?}, device_id: {}, message_num: {}", full_lat, full_lon, full_alt, device_type, device_id, message_num);
+                        // let full_lat = report.lat;
+                        // let full_lon = report.lon;
+                        // let full_alt = report.alt;
+                        // let device_type = report.comment.comment_type;
+                        // let device_id = report.comment.uid;
+                        // let message_num = report.comment.msg_id;
+                        // println!("lat: {}, lon: {}, alt: {}, device_type: {:?}, device_id: {}, message_num: {}", full_lat, full_lon, full_alt, device_type, device_id, message_num);
+                        println!("Received data: {:?}", report);
 
                     }
                     Err(err) => println!("Deserialization error: {:?}", err),
