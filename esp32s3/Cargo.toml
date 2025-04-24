@@ -7,8 +7,8 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 
-defmt = "0.3"
-defmt-rtt = "0.4"
+defmt = "1.0"
+defmt-rtt = "1.0"
 bytemuck = { version = "1.21", features = ["derive"] }
 
 embassy-executor    = { version = "0.7", features = ["task-arena-size-12288"] }
@@ -39,7 +39,7 @@ esp-hal-embassy = {  features = [], git = "https://github.com/esp-rs/esp-hal.git
 esp-println = { version = "0.13", features = ["log"] }
 esp-storage = { version = "0.5", features = [] }
 esp-wifi = { features = ["log", "esp-alloc", "ble"], git="https://github.com/esp-rs/esp-hal.git" }
-bt-hci = { version = "0.2" }
+bt-hci = { version = "0.3" }
 trouble-host = { git="https://github.com/embassy-rs/trouble.git", rev="b6694cf00b602efe9c1c6e639e97218ebf623479" }
 bitflags ={ version = "2.9"}
 
@@ -56,7 +56,7 @@ byteorder ={ version = "1.5", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["libm"]}
 
 # Sensor Drivers
-ublox = { version = "0.4", default-features = false}
+ublox = { version = "0.5", default-features = false, features = ["serde", "ubx_proto23"] }
 UBLOX_rs = { path ="../libs/UBLOX-rs" }
 chrono = { version = "0.4", default-features = false}
 chrono-tz = { version = "0.10", default-features = false}

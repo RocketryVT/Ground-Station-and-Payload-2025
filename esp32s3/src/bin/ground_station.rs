@@ -127,8 +127,8 @@ async fn main(_spawner: Spawner) {
                 let received_data = &receiving_buffer[..received_len as usize];
                 // println!("{:?}", received_data);
                 // println!("Received data length: {}", received_len);
-                // let data: Result<AprsCompressedPositionReport, _> = from_bytes(received_data);
-                let data: Result<Mesh::protocol::NavSat, _> = from_bytes(received_data);
+                let data: Result<AprsCompressedPositionReport, _> = from_bytes(received_data);
+                // let data: Result<Mesh::protocol::NavSat, _> = from_bytes(received_data);
                 match data {
                     Ok(report) => {
                         // println!("Received data: {:?}", report);

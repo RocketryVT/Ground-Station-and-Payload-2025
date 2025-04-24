@@ -2,18 +2,18 @@
 #![no_main]
 
 use bt_hci::controller::ExternalController;
+use defmt::info;
 use embassy_executor::Spawner;
-use esp_hal::timer::timg::TimerGroup;
-use esp_println::println;
+use esp_hal::{clock::CpuClock, timer::timg::TimerGroup};
 use esp_wifi::ble::controller::BleConnector;
 use {esp_alloc as _, esp_backtrace as _};
 use embassy_futures::join::join;
-use embassy_time::{Duration, Instant, Timer};
+use embassy_time::{Duration, Timer};
 use trouble_host::prelude::*;
-use bt_hci::cmd::le::LeReadLocalSupportedFeatures;
-use bt_hci::controller::ControllerCmdSync;
 
-pub const L2CAP_MTU: usize = 255;
+pub mod consts {
+    pub const L2CAP_MTU: usize = 255;
+}
 
 /// Max number of connections
 const CONNECTIONS_MAX: usize = 1;
@@ -24,9 +24,7 @@ const L2CAP_CHANNELS_MAX: usize = 3; // Signal + att + CoC
 #[esp_hal_embassy::main]
 async fn main(_s: Spawner) {
     esp_println::logger::init_logger_from_env();
-    let peripherals = esp_hal::init({
-        esp_hal::Config::default().with_cpu_clock(esp_hal::clock::CpuClock::max())
-    });
+    let peripherals = esp_hal::init(esp_hal::Config::default().with_cpu_clock(CpuClock::max()));
     esp_alloc::heap_allocator!(size: 72 * 1024);
     let timg0 = TimerGroup::new(peripherals.TIMG0);
 
@@ -51,18 +49,17 @@ async fn main(_s: Spawner) {
     let connector = BleConnector::new(&init, bluetooth);
     let controller: ExternalController<_, 20> = ExternalController::new(connector);
 
-    run::<_, { L2CAP_MTU }>(controller).await;
+    run::<_, { consts::L2CAP_MTU }>(controller).await;
 }
 
 
 pub async fn run<C, const L2CAP_MTU: usize>(controller: C)
 where
-    C: Controller
-    + ControllerCmdSync<LeReadLocalSupportedFeatures>,
+    C: Controller,
 {
     // Hardcoded peripheral address
     let address: Address = Address::random([0xff, 0x8f, 0x1a, 0x05, 0xe4, 0xff]);
-    println!("Our address = {:?}", address);
+    info!("Our address = {:?}", address);
 
     let mut resources: HostResources<CONNECTIONS_MAX, L2CAP_CHANNELS_MAX, L2CAP_MTU> = HostResources::new();
     let stack = trouble_host::new(controller, &mut resources).set_random_address(address);
@@ -76,19 +73,15 @@ where
     AdStructure::encode_slice(
         &[AdStructure::Flags(LE_GENERAL_DISCOVERABLE | BR_EDR_NOT_SUPPORTED)],
         &mut adv_data[..],
-    ).unwrap();
+    )
+    .unwrap();
 
     let mut scan_data = [0; 31];
-    AdStructure::encode_slice(&[AdStructure::CompleteLocalName(b"TroubleHT")], &mut scan_data[..]).unwrap();
+    AdStructure::encode_slice(&[AdStructure::CompleteLocalName(b"Trouble")], &mut scan_data[..]).unwrap();
 
     let _ = join(runner.run(), async {
         loop {
-            // Check that the controller used supports the necessary features for high throughput.
-            let res = stack.command(LeReadLocalSupportedFeatures::new()).await.expect("LeReadLocalSupportedFeatures command failed");
-            assert!(res.supports_le_data_packet_length_extension());
-            assert!(res.supports_le_2m_phy());
-
-            println!("Advertising, waiting for connection...");
+            info!("Advertising, waiting for connection...");
             let advertiser = peripheral
                 .advertise(
                     &Default::default(),
@@ -97,51 +90,37 @@ where
                         scan_data: &scan_data[..],
                     },
                 )
-                .await.expect("Advertising failed");
-            let conn = advertiser.accept().await.expect("Connection failed");
+                .await
+                .unwrap();
+            let conn = advertiser.accept().await.unwrap();
 
-            println!("Connection established");
+            info!("Connection established");
 
-            let l2cap_channel_config = L2capChannelConfig {
-                mtu: L2CAP_MTU as u16,
-                // Ensure there will be enough credits to send data throughout the entire connection event.
-                flow_policy: CreditFlowPolicy::Every(50),
-                initial_credits: Some(200),
-            };
+            let mut ch1 = L2capChannel::accept(&stack, &conn, &[0x2349], &Default::default())
+                .await
+                .unwrap();
 
-            let mut ch1 = L2capChannel::accept(&stack, &conn, &[0x2349], &l2cap_channel_config)
-                .await.expect("L2capChannel create failed");
-
-            println!("L2CAP channel accepted");
+            info!("L2CAP channel accepted");
 
             // Size of payload we're expecting
-            const PAYLOAD_LEN: usize = 2510 - 6;
-            const NUM_PAYLOADS: u8 = 40;
+            const PAYLOAD_LEN: usize = 27;
             let mut rx = [0; PAYLOAD_LEN];
-            for i in 0..NUM_PAYLOADS {
-                let len = ch1.receive(&stack, &mut rx).await.expect("L2CAP receive failed");
+            for i in 0..10 {
+                let len = ch1.receive(&stack, &mut rx).await.unwrap();
                 assert_eq!(len, rx.len());
                 assert_eq!(rx, [i; PAYLOAD_LEN]);
             }
 
-            println!("L2CAP data received, echoing");
+            info!("L2CAP data received, echoing");
             Timer::after(Duration::from_secs(1)).await;
-
-            let start = Instant::now();
-
-            for i in 0..NUM_PAYLOADS {
+            for i in 0..10 {
                 let tx = [i; PAYLOAD_LEN];
-                ch1.send::<_, L2CAP_MTU>(&stack, &tx).await.expect("L2CAP send failed");
+                ch1.send::<_, L2CAP_MTU>(&stack, &tx).await.unwrap();
             }
-
-            let duration = start.elapsed();
-
-            println!("L2CAP data of {} bytes echoed at {} kbps.",
-                (PAYLOAD_LEN as u64 * NUM_PAYLOADS as u64),
-                ((PAYLOAD_LEN as u64 * NUM_PAYLOADS as u64 * 8).div_ceil(duration.as_millis())));
+            info!("L2CAP data echoed");
 
             Timer::after(Duration::from_secs(60)).await;
         }
     })
-        .await;
+    .await;
 }

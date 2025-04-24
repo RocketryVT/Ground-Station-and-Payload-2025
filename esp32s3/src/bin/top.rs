@@ -14,25 +14,27 @@ use esp_hal::Async;
 use esp_hal::timer::timg::TimerGroup;
 
 
+use heapless::sorted_linked_list::Min;
 use lora_phy::iv::GenericSx126xInterfaceVariant;
 use lora_phy::sx126x::{Sx1262, Sx126x, TcxoCtrlVoltage};
 use lora_phy::{mod_params::*, sx126x};
 use lora_phy::LoRa;
 
-use postcard::from_bytes;
+use postcard::{from_bytes, from_bytes_cobs};
 
 // use Mesh::protocol;
 
 // use defmt::*;
 use esp_println::println;
 use esp_backtrace as _;
-use Mesh::protocol::AprsCompressedPositionReport;
+use Mesh::protocol::{AprsCompressedPositionReport, MiniData};
 
 const LORA_FREQUENCY_IN_HZ: u32 = 905_200_000; // warning: set this appropriately for the region
 
 // type ChannelBuffer = [u8; 96];
 // static CHANNEL: StaticCell<Channel<'_, NoopRawMutex, ChannelBuffer>> = StaticCell::new();
-static LORA_CHANNEL: Channel<CriticalSectionRawMutex, Mesh::protocol::AprsCompressedPositionReport, 10> = Channel::new();
+static LORA_CHANNEL: Channel<CriticalSectionRawMutex, Mesh::protocol::MiniData, 10> = Channel::new();
+// static LORA_CHANNEL: Channel<CriticalSectionRawMutex, heapless::Vec<u8, 1024>, 10> = Channel::new();
 
 
 #[esp_hal_embassy::main]
@@ -145,8 +147,9 @@ async fn main(spawner: Spawner) {
         .with_stop_bits(esp_hal::uart::StopBits::_1)
         .with_rx(
             esp_hal::uart::RxConfig::default()
-            .with_fifo_full_threshold(120)
-            // .with_timeout_none()
+            .with_fifo_full_threshold(127)
+            // .with_timeout(126)
+            .with_timeout_none()
         );
     let uart = esp_hal::uart::Uart::new(peripherals.UART1, config)
         .expect("Failed to initialize UART")
@@ -180,13 +183,15 @@ async fn main(spawner: Spawner) {
 
     loop {
         println!("Waiting for data");
-        let buffer: heapless::Vec<u8, 96> = match postcard::to_vec(&gps_reciver.receive().await) {
+        let buffer: heapless::Vec<u8, 208> = match postcard::to_vec_cobs(&gps_reciver.receive().await) {
             Ok(b) => b,
             Err(err) => {
                 println!("Serialization error = {:?}", err);
                 heapless::Vec::new()
             }
         };
+        // let data = gps_reciver.receive().await;
+        // let data: &[u8] = &data;
         // let buffer = [0x01u8, 0x02u8, 0x03u8];
         // println!("Recieved Buffer = {:?}", buffer);
         match lora
@@ -207,6 +212,15 @@ async fn main(spawner: Spawner) {
                 println!("Radio error = {:?}", err);
             }
         };
+
+        // match lora.get_rssi().await {
+        //     Ok(rssi) => {
+        //         println!("RSSI = {:?}", rssi);
+        //     }
+        //     Err(err) => {
+        //         println!("Radio error = {:?}", err);
+        //     }
+        // }
         // Locks the Mutex
         // receiver.receive_done();
 
@@ -215,78 +229,130 @@ async fn main(spawner: Spawner) {
         //     Err(err) => println!("Sleep unsuccessful = {:?}", err),
         // }
 
-        Timer::after_secs(1).await;
+        // Timer::after_secs(1).await;
     }
 }
 
-#[embassy_executor::task]
-pub async fn send_pico(mut tx: UartTx<'static, Async>) {
-    // Read data from lora radio, then send over uart to the pico
-    loop {
-        println!("Sending to Pico");
-        let buffer =  [0x01u8, 0x02u8, 0x03u8];
-        println!("Buffer = {:?}", buffer);
-        match embedded_io_async::Write::write(&mut tx, &buffer).await {
-            Ok(_) => {
-                println!("UART data sent");
-            }
-            Err(err) => {
-                println!("Error = {:?}", err);
-                Timer::after_secs(1).await;
-                continue;
-            }
-        }
+// #[embassy_executor::task]
+// pub async fn send_pico(mut tx: UartTx<'static, Async>) {
+//     // Read data from lora radio, then send over uart to the pico
+//     loop {
+//         println!("Sending to Pico");
+//         let buffer =  [0x01u8, 0x02u8, 0x03u8];
+//         println!("Buffer = {:?}", buffer);
+//         match embedded_io_async::Write::write(&mut tx, &buffer).await {
+//             Ok(_) => {
+//                 println!("UART data sent");
+//             }
+//             Err(err) => {
+//                 println!("Error = {:?}", err);
+//                 Timer::after_secs(1).await;
+//                 continue;
+//             }
+//         }
 
-        Timer::after_secs(1).await;
-    }
-}
+//         Timer::after_secs(1).await;
+//     }
+// }
+
+// #[embassy_executor::task]
+// pub async fn read_pico(mut rx: UartRx<'static, Async>, sender: Sender<'static, CriticalSectionRawMutex, heapless::Vec<u8, 1024>, 10>) {
+//     const READ_BUF_SIZE: usize = 1024;
+
+//     let mut rbuf: [u8; READ_BUF_SIZE] = [0u8; READ_BUF_SIZE];
+//     loop {
+//         println!("Reading from Pico");
+//         let r = embedded_io_async::Read::read(&mut rx, &mut rbuf).await;
+//         match rx.check_for_errors() {
+//             Ok(_) => {}
+//             Err(err) => {
+//                 println!("UART Error: {:?}", err);
+//                 continue;
+//             }
+//         }
+//         match r {
+//             Ok(len) => {
+//                 println!("Read {len} bytes: {:?}", &rbuf[..len]);
+
+//                 // Send the raw bytes over the channel
+//                 let mut data = heapless::Vec::<u8, 1024>::new();
+
+//                 // Attempt to deserialize the data
+//                 let aprs_report: Result<MiniData, _> = from_bytes(&rbuf[..len]);
+//                 match aprs_report {
+//                     Ok(report) => {
+//                         println!("Received data: {:?}", report);
+//                         // Serialize the data to send over the channel
+//                         match postcard::to_slice(&report, &mut data) {
+//                             Ok(_) => {
+//                                 println!("Serialized data: {:?}", data);
+//                             }
+//                             Err(err) => {
+//                                 println!("Serialization error: {:?}", err);
+//                                 continue;
+//                             }
+//                         }
+//                     }
+//                     Err(err) => {
+//                         println!("Deserialization error: {:?}", err);
+//                         continue;
+//                     }
+//                 }
+
+//                 if data.extend_from_slice(&rbuf[..len]).is_ok() {
+//                     sender.send(data).await;
+//                 } else {
+//                     println!("Error: Data too large for channel buffer");
+//                 }
+//             }
+//             Err(err) => {
+//                 println!("RX Error: {:?}", err);
+//                 continue;
+//             }
+//         }
+
+//         // Delay to avoid UART overrun issues
+//         Timer::after_millis(100).await;
+//     }
+// }
 
 #[embassy_executor::task]
-pub async fn read_pico(mut rx: UartRx<'static, Async>, sender: Sender<'static, CriticalSectionRawMutex, AprsCompressedPositionReport, 10>) {
+pub async fn read_pico(mut rx: UartRx<'static, Async>, sender: Sender<'static, CriticalSectionRawMutex, MiniData, 10>) {
         const READ_BUF_SIZE: usize = 64;
         const MAX_BUFFER_SIZE: usize = 10 * READ_BUF_SIZE + 16;
 
-        let mut rbuf: [u8; MAX_BUFFER_SIZE] = [0u8; MAX_BUFFER_SIZE];
+        // let mut rbuf: [u8; MAX_BUFFER_SIZE] = [0u8; MAX_BUFFER_SIZE];
         let mut offset = 0;
 
-        let mut aprs_buffer = [0u8; 96];
+        const MESSAGE_SIZE: usize = 256; // Expected size of the serialized MiniData
+        let mut rbuf: [u8; MESSAGE_SIZE] = [0u8; MESSAGE_SIZE];
+        // let mut offset = 0;
+
         loop {
-            println!("Reading from Pico");
             let r = embedded_io_async::Read::read(&mut rx, &mut rbuf[offset..]).await;
             match rx.check_for_errors() {
                 Ok(_) => {}
                 Err(err) => {
                     println!("Error = {:?}", err);
+                    offset = 0;
                     continue;
                 }
             }
             match r {
                 Ok(len) => {
+                    // println!("Read {len} bytes:");
                     offset += len;
-                    println!("Read: {len}, data: {:?}", &rbuf[..offset]);
-                    offset = 0;
-                    let aprs_report: Result<AprsCompressedPositionReport, _> = from_bytes(&rbuf);
-                    match aprs_report {
-                        Ok(report) => {
-                            println!("Received data: {:?}", report);
-                            match postcard::to_slice(&report, &mut aprs_buffer) {
-                                Ok(serialized_report) => {
-                                    println!("Serialized data: {:?}", serialized_report);
-                                    sender.send(report).await;
-                                    offset = 0;
-                                    rbuf.fill(0);
-                                    
-                                }
-                                Err(err) => {
-                                    println!("Serialization error: {:?}", err);
-                                    continue;
-                                },
-                            };
+                    if offset >= MESSAGE_SIZE {
+                        let data: Result<MiniData, _> = from_bytes_cobs(&mut rbuf);
+                        match data {
+                            Ok(report) => {
+                                println!("Received data: {:?}", report);
+                                sender.send(report).await;
+                            }
+                            Err(err) => println!("Deserialization error: {:?}", err),
                         }
-                        Err(err) => {
-                            println!("Deserialization error: {:?}", err);
-                            continue;
-                        },
+                        offset = 0; // Reset offset after processing
+                        rbuf.fill(0); // Clear the buffer
                     }
                 }
                 Err(e) => {
