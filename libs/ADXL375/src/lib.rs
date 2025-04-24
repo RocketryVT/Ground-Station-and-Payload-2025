@@ -13,6 +13,9 @@ use embedded_hal_async::{delay::DelayNs, i2c::I2c};
 mod registers;
 pub use registers::*;
 
+const ADXL375_MG2G_MULTIPLIER: f32 = 0.049; // 49 mg/LSB
+const SENSORS_GRAVITY_EARTH: f32 = 9.80665; // m/s^2
+
 /// Errors that can occur when communicating with the BMP390 barometer.
 #[derive(Debug, Clone, Copy, Format)]
 pub enum Error<E> {
@@ -77,15 +80,19 @@ where
     }
 
     /// Read the X, Y, and Z acceleration values.
-    pub async fn read_acceleration(&mut self) -> Result<(i16, i16, i16), Error<I::Error>> {
+    pub async fn read_acceleration(&mut self) -> Result<(f32, f32, f32), Error<I::Error>> {
         let mut buffer = [0; 6];
         self.i2c
             .write_read(self.address.into(), &[Register::DATAX0 as u8], &mut buffer)
             .await
             .map_err(Error::I2c)?;
-        let x = i16::from_le_bytes([buffer[0], buffer[1]]);
-        let y = i16::from_le_bytes([buffer[2], buffer[3]]);
-        let z = i16::from_le_bytes([buffer[4], buffer[5]]);
+        let raw_x = i16::from_le_bytes([buffer[0], buffer[1]]);
+        let raw_y = i16::from_le_bytes([buffer[2], buffer[3]]);
+        let raw_z = i16::from_le_bytes([buffer[4], buffer[5]]);
+
+        let x = ((raw_x as f32) * ADXL375_MG2G_MULTIPLIER) * SENSORS_GRAVITY_EARTH;
+        let y = ((raw_y as f32) * ADXL375_MG2G_MULTIPLIER) * SENSORS_GRAVITY_EARTH;
+        let z = ((raw_z as f32) * ADXL375_MG2G_MULTIPLIER) * SENSORS_GRAVITY_EARTH;
         Ok((x, y, z))
     }
 

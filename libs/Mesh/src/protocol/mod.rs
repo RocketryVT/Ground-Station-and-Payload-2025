@@ -1,5 +1,5 @@
 use modular_bitfield::prelude::*;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use ublox::{GpsFix as UbloxGPSFix, NavSatQualityIndicator as UbloxNavSatQualityIndicator, NavSatSvHealth as UbloxNavSatSvHealth, NavSatOrbitSource as UbloxNavSatOrbitSource};
 
 /// AllSensorData is a struct that contains the data that is sent over the two radios
@@ -12,7 +12,7 @@ use ublox::{GpsFix as UbloxGPSFix, NavSatQualityIndicator as UbloxNavSatQualityI
 /// - GPS Data, including Latitude, Longitude, Altitude, Speed, and Course, Number of Sats and UTC Time
 /// - ADXL375 Accelerometer data
 /// - The Second ISM330DHCX Accelerometer and Gyroscope data (In the future this will be hard mounted to the payload)
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, Default)]
 pub struct AllSensorData{
     pub ism330dhcx: Option<ISM330DHCX>,
     pub lsm6dso32: Option<LSM6DSO32>,
@@ -65,8 +65,8 @@ pub struct BMP390{
 
 /// GPS is a struct that contains the data from the GPS module
 /// The data includes Latitude, Longitude, Altitude, Speed, Course, Number of Sats, and UTC Time
-#[derive(Debug, serde::Serialize, Deserialize, Clone, Copy)]
-pub struct GPS{
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub struct GPS {
     pub latitude: f64,
     pub longitude: f64,
     pub altitude: f64,
@@ -74,10 +74,23 @@ pub struct GPS{
     pub num_sats: u8,
     pub fix_type: GpsFix,
     pub utc_time: UTC,
-    pub sats_data: NavSat 
+    // pub sats_data: ublox::DebugNavSat<'a>
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// Wrapper type for ublox::NavSat to implement Debug
+pub struct DebugNavSat<'a>(pub &'a ublox::NavSatRef<'a>);
+
+impl<'a> core::fmt::Debug for DebugNavSat<'a> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("NavSat")
+            .field("itow", &self.0.itow())
+            .field("version", &self.0.version())
+            .field("num_svs", &self.0.num_svs())
+            .finish()
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize)]
 pub enum GpsFix {
     NoFix = 0,
     DeadReckoningOnly = 1,
@@ -96,6 +109,26 @@ impl Default for GpsFix {
 impl Into<u8> for GpsFix {
     fn into(self) -> u8 {
         self as u8
+    }
+}
+
+impl<'de> Deserialize<'de> for GpsFix {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value: u8 = Deserialize::deserialize(deserializer)?;
+        match value {
+            0 => Ok(GpsFix::NoFix),
+            1 => Ok(GpsFix::DeadReckoningOnly),
+            2 => Ok(GpsFix::Fix2D),
+            3 => Ok(GpsFix::Fix3D),
+            4 => Ok(GpsFix::GPSPlusDeadReckoning),
+            5 => Ok(GpsFix::TimeOnlyFix),
+            _ => Err(serde::de::Error::custom(
+                "unknown variant `{}`, expected one of `0`, `1`, `2`, `3`, `4`, `5`",
+            )),
+        }
     }
 }
 
@@ -139,6 +172,25 @@ pub struct NavSat {
     pub svs: [Option<NavSatSvInfo>; 32],
 }
 
+impl From<ublox::NavSatRef<'_>> for NavSat {
+    fn from(nav_sat: ublox::NavSatRef<'_>) -> Self {
+        NavSat {
+            itow: nav_sat.itow(),
+            num_svs: nav_sat.num_svs(),
+            version: nav_sat.version(),
+            svs: {
+                let mut svs_array = [None; 32];
+                for (i, sv) in nav_sat.svs().enumerate() {
+                    if i < 32 {
+                        svs_array[i] = Some(NavSatSvInfo::from(sv));
+                    }
+                }
+                svs_array
+            }
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct NavSatSvInfo {
     pub gnss_id: u8,
@@ -148,6 +200,20 @@ pub struct NavSatSvInfo {
     pub azim: i16,
     pub pr_res: i16,
     pub flags: NavSatSvFlags,
+}
+
+impl From<ublox::NavSatSvInfoRef<'_>> for NavSatSvInfo {
+    fn from(nav_info: ublox::NavSatSvInfoRef<'_>) -> Self {
+        NavSatSvInfo {
+            gnss_id: nav_info.gnss_id(),
+            sv_id: nav_info.sv_id(),
+            cno: nav_info.cno(),
+            elev: nav_info.elev(),
+            azim: nav_info.azim(),
+            pr_res: nav_info.pr_res(),
+            flags: NavSatSvFlags::from(nav_info.flags()),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -171,6 +237,30 @@ pub struct NavSatSvFlags {
     pub do_corr: bool,
 }
 
+impl From<ublox::NavSatSvFlags> for NavSatSvFlags {
+    fn from(flags: ublox::NavSatSvFlags) -> Self {
+        NavSatSvFlags {
+            quality_ind: NavSatQualityIndicator::from(flags.quality_ind()),
+            sv_used: flags.sv_used(),
+            health: NavSatSvHealth::from(flags.health()),
+            differential_correction_available: flags.differential_correction_available(),
+            smoothed: flags.smoothed(),
+            orbit_sources: NavSatOrbitSource::from(flags.orbit_source()),
+            ephemeris_available: flags.ephemeris_available(),
+            almanac_available: flags.almanac_available(),
+            an_offline_available: flags.an_offline_available(),
+            an_auto_available: flags.an_auto_available(),
+            sbas_corr: flags.sbas_corr(),
+            rtcm_corr: flags.rtcm_corr(),
+            slas_corr: flags.slas_corr(),
+            spartn_corr: flags.spartn_corr(),
+            pr_corr: flags.pr_corr(),
+            cr_corr: flags.cr_corr(),
+            do_corr: flags.do_corr(),
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum NavSatQualityIndicator {
     #[default]
@@ -180,6 +270,7 @@ pub enum NavSatQualityIndicator {
     SignalDetected = 3,
     CodeLock = 4,
     CarrierLock = 5,
+    Invalid = 6,
 }
 
 impl From<UbloxNavSatQualityIndicator> for NavSatQualityIndicator {
@@ -191,6 +282,7 @@ impl From<UbloxNavSatQualityIndicator> for NavSatQualityIndicator {
             UbloxNavSatQualityIndicator::SignalDetected => NavSatQualityIndicator::SignalDetected,
             UbloxNavSatQualityIndicator::CodeLock => NavSatQualityIndicator::CodeLock,
             UbloxNavSatQualityIndicator::CarrierLock => NavSatQualityIndicator::CarrierLock,
+            UbloxNavSatQualityIndicator::Invalid => NavSatQualityIndicator::Invalid,
         }
     }
 }
@@ -263,9 +355,9 @@ pub struct UTC {
 /// ADXL375 is a struct that contains the data from the ADXL375 Accelerometer
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct ADXL375{
-    pub accel_x: i16,
-    pub accel_y: i16,
-    pub accel_z: i16,
+    pub accel_x: f32,
+    pub accel_y: f32,
+    pub accel_z: f32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default)]
@@ -273,6 +365,31 @@ pub struct MiniData {
     pub lat: f64,
     pub lon: f64,
     pub alt: f64,
+    pub num_sats: u8,
+    pub gps_fix: GpsFix,
+    pub gps_time: UTC,
+    pub baro_alt: f32,
+    pub ism_axel_x: f64,
+    pub ism_axel_y: f64,
+    pub ism_axel_z: f64,
+    pub ism_gyro_x: f64,
+    pub ism_gyro_y: f64,
+    pub ism_gyro_z: f64,
+    pub lsm_axel_x: f64,
+    pub lsm_axel_y: f64,
+    pub lsm_axel_z: f64,
+    pub lsm_gyro_x: f64,
+    pub lsm_gyro_y: f64,
+    pub lsm_gyro_z: f64,
+    pub adxl_axel_x: f32,
+    pub adxl_axel_y: f32,
+    pub adxl_axel_z: f32,
+    pub ism_axel_x2: f64,
+    pub ism_axel_y2: f64,
+    pub ism_axel_z2: f64,
+    pub ism_gyro_x2: f64,
+    pub ism_gyro_y2: f64,
+    pub ism_gyro_z2: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default)]
@@ -289,6 +406,8 @@ pub struct AprsCompressedPositionReport {
     pub lat: f64,
     pub lon: f64,
     pub alt: f64,
+    pub num_sats: u8,
+    pub gps_fix: GpsFix,
 }
 
 pub struct Acknowledgement {
@@ -345,7 +464,7 @@ pub enum CompressionOrigin {
 pub struct Comment {
     pub uid: u8, // Unique Identifier (8 bits)
     pub destination_uid: u8, // Destination Unique Identifier (8 bits)
-    pub msg_id: u8, // Message ID (8 bits)
+    pub msg_id: u16, // Message ID (16 bits)
     pub hops_left : u8, // Hops Left (3 bits)
     pub comment_type: DeviceType, // Type (2 bits)
     pub msg_type: MessageType, // Message Type (2 bit)
@@ -462,6 +581,11 @@ mod tests {
             symbol_code: '{',
             compressed_altitude: *b"?!",
             compression_type: 'T',
+            lat: 33.4,
+            lon: 44.5,
+            alt: 434.4,
+            num_sats: 5,
+            gps_fix: GpsFix::Fix3D,
             comment: Comment::new()
                 .with_uid(1)
                 .with_destination_uid(2)

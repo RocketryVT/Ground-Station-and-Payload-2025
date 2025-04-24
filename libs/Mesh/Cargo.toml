@@ -8,5 +8,5 @@ modular-bitfield = { version = "0.11" }
 bitfields = "0.12"
 postcard = { version = "1.1", features = ["defmt"] }
 serde = { version = "1.0", features = ["derive"], default_features = false}
-ublox = { version = "0.4", default-features = false, features = ["serde"]}
+ublox = { version = "0.5", default-features = false, features = ["ubx_proto23"] }
 heapless = { version = "0.8", features = ["serde"]}

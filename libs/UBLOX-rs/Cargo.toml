@@ -35,8 +35,8 @@ embedded-io = "0.6"
 embedded-io-async = "0.6"
 libm = "0.2"
 uom = { version="0.36", features = ["f32", "si", "autoconvert"],  default-features = false}
-defmt = { version = "0.3" }
-ublox = { version = "0.4", default-features = false}
+defmt = { version = "1.0" }
+ublox = { version = "0.5", default-features = false, features = ["serde", "ubx_proto23"] }
 # embedded-hal-mock = { version = "0.11", features = ["eh1", "embedded-hal-async"], default-features = false}
 
 [dev-dependencies]
