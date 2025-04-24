@@ -1,17 +1,20 @@
 #![no_main]
 #![no_std]
 #![allow(non_snake_case)]
+use embassy_rp::multicore::{spawn_core1, Stack};
 // use embassy_rp::pio_programs::uart::{PioUartRx, PioUartRxProgram, PioUartTx, PioUartTxProgram};
-use embassy_rp::uart::{DataBits, InterruptHandler, Parity, StopBits, Uart, UartTx};
+use embassy_rp::uart::{Blocking, BufferedUartTx, DataBits, InterruptHandler, Parity, StopBits, Uart, UartTx};
+use embedded_io::Write;
+use futures::poll;
 use num_traits::Float;
 
 // Rust 
 use static_cell::StaticCell;
-use Mesh::protocol::{APRSGPSFix, AllSensorData, AprsCompressedPositionReport, CompressionOrigin, CompressionType, NMEASource, SensorUpdate};
+use Mesh::protocol::{APRSGPSFix, AllSensorData, AprsCompressedPositionReport, CompressionOrigin, CompressionType, MiniData, NMEASource, NavSat, SensorUpdate};
 use LSM6DSO32::Lsm6dso32;
 use core::f32::consts::SQRT_2;
 
-use postcard::to_vec;
+use postcard::{to_vec, to_vec_cobs};
 
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use embedded_sdmmc::{SdCard, TimeSource, Timestamp};
@@ -22,12 +25,12 @@ use embassy_rp::spi::Spi;
 use embassy_rp::{bind_interrupts, peripherals::*, spi};
 use embassy_rp::usb::{Driver, InterruptHandler as UsbInterruptHandler};
 
-use embassy_executor::Spawner;
+use embassy_executor::{Executor, Spawner};
 use embassy_time::{Instant, Timer};
 use embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice;
 use embassy_sync::mutex::Mutex;
 use embassy_sync::channel::{Channel, Receiver, Sender};
-use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
+use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, ThreadModeRawMutex};
 use embassy_time::Delay;
 
 use ublox::{PacketRef, Parser};
@@ -45,19 +48,25 @@ use defmt_rtt as _;
 use log::info;
 use panic_probe as _;
 
-type I2c0Bus = Mutex<ThreadModeRawMutex, I2c<'static, I2C0, i2c::Async>>;
-type I2c1Bus = Mutex<ThreadModeRawMutex, I2c<'static, I2C1, i2c::Async>>;
+type I2c0Bus = Mutex<CriticalSectionRawMutex, I2c<'static, I2C0, i2c::Async>>;
+type I2c1Bus = Mutex<CriticalSectionRawMutex, I2c<'static, I2C1, i2c::Async>>;
 // type Spi0Bus = Mutex<NoopRawMutex, spi::Spi<'static, SPI0, spi::Blocking>>;
 
-static CHANNEL: Channel<ThreadModeRawMutex, Mesh::protocol::SensorUpdate, 10> = Channel::new();
-static LORA_CHANNEL: Channel<ThreadModeRawMutex, Mesh::protocol::AprsCompressedPositionReport, 1> = Channel::new();
+static mut CORE1_STACK: Stack<8192> = Stack::new();
+static EXECUTOR0: StaticCell<Executor> = StaticCell::new();
+static EXECUTOR1: StaticCell<Executor> = StaticCell::new();
+
+static CHANNEL: Channel<CriticalSectionRawMutex, Mesh::protocol::SensorUpdate, 20> = Channel::new();
+// static LORA_CHANNEL: Channel<ThreadModeRawMutex, Mesh::protocol::AprsCompressedPositionReport, 1> = Channel::new();
+static LORA_CHANNEL: Channel<CriticalSectionRawMutex, Mesh::protocol::MiniData, 1> = Channel::new();
+// static RFD_CHANNEL: Channel<ThreadModeRawMutex, Mesh::protocol::AllSensorData, 1> = Channel::new();
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => UsbInterruptHandler<USB>;
     I2C0_IRQ => embassy_rp::i2c::InterruptHandler<I2C0>;
     I2C1_IRQ => embassy_rp::i2c::InterruptHandler<I2C1>;
     UART0_IRQ => InterruptHandler<UART0>;
-    // UART1_IRQ => InterruptHandler<UART1>;
+    UART1_IRQ => InterruptHandler<UART1>;
 });
 
 #[derive(Default)]
@@ -78,49 +87,17 @@ impl TimeSource for DummyTimesource {
     }
 }
 
-#[embassy_executor::main]
-async fn main(spawner: Spawner) {
+#[cortex_m_rt::entry]
+fn main() -> ! {
     // Peripherals access
     let p = embassy_rp::init(Default::default());
 
-    Timer::after_secs(1).await;
+    poll(Timer::after_secs(1));
 
-    // info!("Setting up USB...");
-    let usb_driver = Driver::new(p.USB, Irqs);
-    spawner.spawn(logger_task(usb_driver)).unwrap();
+    info!("Starting up...");
 
-    Timer::after_secs(4).await;
+    poll(Timer::after_secs(1));
 
-    // Setup SD Card
-    // let sd_card_detect = p.PIN_16;
-    // let sd_clk = p.PIN_18;
-    // let sd_mosi = p.PIN_19;
-    // let sd_miso = p.PIN_20;
-    // let sd_dat1 = p.PIN_21;
-    // let sd_dat2 = p.PIN_22;
-    // let sd_cs = Output::new(p.PIN_23, Level::High);
-    // let mut sd_spi_config = embassy_rp::spi::Config::default();
-    // SPI clock needs to be running at <= 400kHz during initialization
-    // sd_spi_config.frequency = 400_000;
-    // let spi= embassy_rp::spi::Spi::new_blocking(
-    //     p.SPI0,
-    //     sd_clk,
-    //     sd_mosi,
-    //     sd_miso,
-    //     sd_spi_config
-    // );
-    // let spi_dev = ExclusiveDevice::new_no_delay(spi, sd_cs).unwrap();
-    // let sd_card_options = embedded_sdmmc::sdcard::AcquireOpts {
-    //     use_crc: true,
-    //     acquire_retries: 50,
-    // };
-    // let sdcard = SdCard::new_with_options(spi_dev, Delay, sd_card_options);
-    // let mut config = spi::Config::default();
-    // config.frequency = 16_000_000;
-    // sdcard.spi(|dev| dev.bus_mut().set_config(&config));
-    // Done setting up SD card
-
-    // info!("Setting up I2C...");
     let mut ic2_config = embassy_rp::i2c::Config::default();
     ic2_config.frequency = 400_000;
 
@@ -131,8 +108,6 @@ async fn main(spawner: Spawner) {
     static I2C0_BUS: StaticCell<I2c0Bus> = StaticCell::new();
     let i2c0_bus = I2C0_BUS.init(Mutex::new(i2c0));
 
-    Timer::after_secs(1).await;
-
     // Shared I2C1 bus
     let i2c1_sda = p.PIN_18;
     let i2c1_scl = p.PIN_19;
@@ -140,42 +115,22 @@ async fn main(spawner: Spawner) {
     static I2C1_BUS: StaticCell<I2c1Bus> = StaticCell::new();
     let i2c1_bus = I2C1_BUS.init(Mutex::new(i2c1));
 
-    Timer::after_secs(1).await;
+     // UART Config
+     let mut config = embassy_rp::uart::Config::default();
+     config.baudrate = 115200;
+     config.data_bits = DataBits::DataBits8;
+     config.parity = Parity::ParityNone;
+     config.stop_bits = StopBits::STOP1;
+ 
+     // Heltec UART 0
+     let hel_uart_tx = p.PIN_12;
+     let hel_uart_rx = p.PIN_13;
+     let hel_tx_dma = p.DMA_CH0;
+     let hel_rx_dma = p.DMA_CH1;
+     let hel_uart = Uart::new(p.UART0, hel_uart_tx, hel_uart_rx, Irqs, hel_tx_dma, hel_rx_dma, config);
+     let (hel_tx, mut _hel_rx) = hel_uart.split();
 
-    // UART Config
-    let mut config = embassy_rp::uart::Config::default();
-    config.baudrate = 115200;
-    config.data_bits = DataBits::DataBits8;
-    config.parity = Parity::ParityNone;
-    config.stop_bits = StopBits::STOP1;
-
-    // Heltec UART 0
-    let hel_uart_tx = p.PIN_12;
-    let hel_uart_rx = p.PIN_13;
-    let hel_tx_dma = p.DMA_CH0;
-    let hel_rx_dma = p.DMA_CH1;
-    let hel_uart = Uart::new(p.UART0, hel_uart_tx, hel_uart_rx, Irqs, hel_tx_dma, hel_rx_dma, config);
-    let (hel_tx, mut _hel_rx) = hel_uart.split();
-
-    // config.baudrate = 57600;
-
-    // RFD900x UART 1
-    // let rfd900x_uart_tx = p.PIN_20;
-    // let rfd900x_uart_rx = p.PIN_21;
-    // static RFD_TX_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
-    // let rfd_tx_buf = &mut RFD_TX_BUF.init([0; 1024])[..];
-    // static RFD_RX_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
-    // let rfd_rx_buf = &mut RFD_RX_BUF.init([0; 1024])[..];
-    // let rfd_tx_dma = p.DMA_CH2;
-    // let rfd_rx_dma = p.DMA_CH3;
-    // let rfd900x_uart = Uart::new(p.UART1, rfd900x_uart_tx, rfd900x_uart_rx, Irqs, rfd_tx_dma, rfd_rx_dma, config);
-    // let (rfd_tx, _rfd_rx) = rfd900x_uart.split();
-
-    
-    // I2C0 Tasks (BMP390, ISM330DHCX, LSM6DSO32)
-    // I2C Address for BMP390 is 0x6A
-
-    let ism_options = ism330dhcx::Options { 
+     let ism_options = ism330dhcx::Options { 
         device: ism330dhcx::DeviceOptions { 
             set_boot: true, 
             set_bdu: true,
@@ -222,48 +177,113 @@ async fn main(spawner: Spawner) {
         disable_high_performance: false,
     };
 
-    spawner.spawn(ism330dhcx_task(i2c0_bus, ism_options, CHANNEL.sender())).unwrap();
-    // I2C Address for LSM6DSO32 is 0x6B
-    spawner.spawn(lsm6dso32_task(i2c0_bus, lsm_options, CHANNEL.sender())).unwrap();
-    // I2C Address for BMP390 is 0x77
-    spawner.spawn(bmp390_task(i2c0_bus, CHANNEL.sender())).unwrap();
+    // spawn_core1(
+    //     p.CORE1,
+    //     unsafe { &mut *core::ptr::addr_of_mut!(CORE1_STACK) },
+    //     move || {
+    //         let executor1 = EXECUTOR1.init(Executor::new());
+    //         executor1.run(|spawner| {
+    //             // I2C Address for N9M is 0x42
+    //             spawner.spawn(gps_task(i2c1_bus, CHANNEL.sender())).unwrap();
+    //             // I2C Address for ADXL375 is 0x53
+    //             spawner.spawn(adxl375_task(i2c1_bus, CHANNEL.sender())).unwrap();
+    //             // I2C Address for ISM is 0x6A
+    //             spawner.spawn(ism330dhcx_task2(i2c1_bus, CHANNEL.sender())).unwrap();
+    //         });
+    //     },
+    // );
+
+    // info!("Setting up USB...");
+    let usb_driver = Driver::new(p.USB, Irqs);
+    let executor0 = EXECUTOR0.init(Executor::new());
+    executor0.run(|spawner| {
+        spawner.spawn(logger_task(usb_driver)).unwrap();
+        poll(Timer::after_secs(1));
+        spawner.spawn(ism330dhcx_task(i2c0_bus, ism_options, CHANNEL.sender())).unwrap();
+        // I2C Address for LSM6DSO32 is 0x6B
+        spawner.spawn(lsm6dso32_task(i2c0_bus, lsm_options, CHANNEL.sender())).unwrap();
+        // I2C Address for BMP390 is 0x77
+        spawner.spawn(bmp390_task(i2c0_bus, CHANNEL.sender())).unwrap();
+
+        // I2C Address for N9M is 0x42
+        spawner.spawn(gps_task(i2c1_bus, CHANNEL.sender())).unwrap();
+        // I2C Address for ADXL375 is 0x53
+        spawner.spawn(adxl375_task(i2c1_bus, CHANNEL.sender())).unwrap();
+        // I2C Address for ISM is 0x6A
+        spawner.spawn(ism330dhcx_task2(i2c1_bus, CHANNEL.sender())).unwrap();
+
+        // Aggregator Task
+        poll(Timer::after_secs(3));
+        spawner.spawn(aggregator_task(CHANNEL.receiver(), LORA_CHANNEL.sender())).unwrap();
+
+        spawner.spawn(lora_task(hel_tx, LORA_CHANNEL.receiver())).unwrap();
+    });
     
-    // // I2C Address for N9M is 0x42
-    match spawner.spawn(gps_task(i2c1_bus, CHANNEL.sender())) {
-        Ok(_) => info!("GPS Task spawned"),
-        Err(_) => {
-            match spawner.spawn(error_task("Failed to spawn GPS task")) {
-                Ok(_) => info!("Error task spawned"),
-                Err(_) => {
-                    info!("Failed to spawn error task");
-                }
-            }
-        }
-    }
-    // I2C Address for ADXL375 is 0x53
-    spawner.spawn(adxl375_task(i2c1_bus, CHANNEL.sender())).unwrap();
-    // I2C Address for ISM is 0x6A
-    spawner.spawn(ism330dhcx_task2(i2c1_bus, CHANNEL.sender())).unwrap();
 
-    // Aggregator Task
-    spawner.spawn(aggregator_task(CHANNEL.receiver(), LORA_CHANNEL.sender())).unwrap();
+    
 
-    spawner.spawn(lora_task(hel_tx, LORA_CHANNEL.receiver())).unwrap();
-    // match spawner.spawn(mavlink_send(rfd_tx, CHANNEL.receiver())) {
+    // Setup SD Card
+    // let sd_card_detect = p.PIN_16;
+    // let sd_clk = p.PIN_18;
+    // let sd_mosi = p.PIN_19;
+    // let sd_miso = p.PIN_20;
+    // let sd_dat1 = p.PIN_21;
+    // let sd_dat2 = p.PIN_22;
+    // let sd_cs = Output::new(p.PIN_23, Level::High);
+    // let mut sd_spi_config = embassy_rp::spi::Config::default();
+    // SPI clock needs to be running at <= 400kHz during initialization
+    // sd_spi_config.frequency = 400_000;
+    // let spi= embassy_rp::spi::Spi::new_blocking(
+    //     p.SPI0,
+    //     sd_clk,
+    //     sd_mosi,
+    //     sd_miso,
+    //     sd_spi_config
+    // );
+    // let spi_dev = ExclusiveDevice::new_no_delay(spi, sd_cs).unwrap();
+    // let sd_card_options = embedded_sdmmc::sdcard::AcquireOpts {
+    //     use_crc: true,
+    //     acquire_retries: 50,
+    // };
+    // let sdcard = SdCard::new_with_options(spi_dev, Delay, sd_card_options);
+    // let mut config = spi::Config::default();
+    // config.frequency = 16_000_000;
+    // sdcard.spi(|dev| dev.bus_mut().set_config(&config));
+    // Done setting up SD card
+
+    // config.baudrate = 57600;
+
+    // RFD900x UART 1
+    // let rfd900x_uart_tx = p.PIN_20;
+    // let rfd900x_uart_rx = p.PIN_21;
+    // let rfd_tx_dma = p.DMA_CH2;
+    // let rfd_rx_dma = p.DMA_CH3;
+    // let rfd900x_uart = Uart::new(p.UART1, rfd900x_uart_tx, rfd900x_uart_rx, Irqs, rfd_tx_dma, rfd_rx_dma, config);
+    // let (rfd_tx, _rfd_rx) = rfd900x_uart.split();
+
+    
+    
+
+   
+
+    
+    // match spawner.spawn(mavlink_send(rfd_tx, RFD_CHANNEL.receiver())) {
     //     Ok(_) => info!("Mavlink send task spawned"),
     //     Err(_) => {
     //         spawner.spawn(error_task("Failed to spawn Mavlink send task")).expect("Failed to spawn error task");
     //     }
     // }
-    // spawner.spawn(mavlink_read(rfd_rx)).unwrap();
-    // spawner.spawn(channel_test(CHANNEL.receiver())).unwrap();
-
     // spawner.spawn(write_sd(sdcard)).unwrap();
    
 }
 
 #[embassy_executor::task]
-async fn aggregator_task(receiver: Receiver<'static, ThreadModeRawMutex, SensorUpdate, 10>, lora_sender: Sender<'static, ThreadModeRawMutex, AprsCompressedPositionReport, 1>) {
+async fn aggregator_task(
+    receiver: Receiver<'static, CriticalSectionRawMutex, SensorUpdate, 20>, 
+    // lora_sender: Sender<'static, ThreadModeRawMutex, AprsCompressedPositionReport, 1>, 
+    lora_sender: Sender<'static, CriticalSectionRawMutex, Mesh::protocol::MiniData, 1>,
+    // rfd_sender: Sender<'static, ThreadModeRawMutex, AllSensorData, 1>
+) {
 
     info!("Aggregator task started");
 
@@ -277,19 +297,19 @@ async fn aggregator_task(receiver: Receiver<'static, ThreadModeRawMutex, SensorU
         ism330dhcx2: None,
     };
 
-    let aprs_compression_type = CompressionType::new()
-        .with_gps_fix(APRSGPSFix::Current)
-        .with_nmea_source(NMEASource::Other)
-        .with_compression_origin(CompressionOrigin::Compressed);
+    // let aprs_compression_type = CompressionType::new()
+    //     .with_gps_fix(APRSGPSFix::Current)
+    //     .with_nmea_source(NMEASource::Other)
+    //     .with_compression_origin(CompressionOrigin::Compressed);
 
-    let mut aprs_comment = Mesh::protocol::Comment::default();
-    aprs_comment.uid = 1;
-    aprs_comment.destination_uid = 0;
-    aprs_comment.msg_id = 0;
-    aprs_comment.hops_left = 3;
-    aprs_comment.comment_type = Mesh::protocol::DeviceType::Top;
-    aprs_comment.msg_type = Mesh::protocol::MessageType::Data;
-    aprs_comment.team_number = 190;
+    // let mut aprs_comment = Mesh::protocol::Comment::default();
+    // aprs_comment.uid = 1;
+    // aprs_comment.destination_uid = 0;
+    // aprs_comment.msg_id = 0;
+    // aprs_comment.hops_left = 3;
+    // aprs_comment.comment_type = Mesh::protocol::DeviceType::Top;
+    // aprs_comment.msg_type = Mesh::protocol::MessageType::Data;
+    // aprs_comment.team_number = 190;
     
 
     // Madgwick filter
@@ -311,7 +331,6 @@ async fn aggregator_task(receiver: Receiver<'static, ThreadModeRawMutex, SensorU
             }
             SensorUpdate::GPS(data) => {
                 sensor_data.gps = Some(data);
-                // info!("GPS Data: {:?}", data);
             }
             SensorUpdate::ADXL375(data) => {
                 sensor_data.adxl375 = Some(data);
@@ -322,28 +341,73 @@ async fn aggregator_task(receiver: Receiver<'static, ThreadModeRawMutex, SensorU
         }
         
         if let Some(gps) = &sensor_data.gps {
-            aprs_comment.ads.lat = gps.latitude as i16;
-            aprs_comment.ads.lon = gps.longitude as i16;
-            let (lat, long) = compress_lat_lon(gps.latitude, gps.longitude);
-            let report = AprsCompressedPositionReport { 
-                compression_format: '@',
-                time: time_to_zulu(gps.utc_time),
-                symbol_table: '\\', // Alternative symbol table
-                compressed_lat: lat,
-                compressed_long: long,
-                symbol_code: 'O', // Symbol for rocket
-                compressed_altitude: compress_altitude(gps.altitude),
-                compression_type: aprs_compression_type.into_bytes()[0] as char, 
-                comment: aprs_comment,
-                lat: gps.latitude,
-                lon: gps.longitude,
-                alt: gps.altitude,
-            };
-            // info!("Sending report: {:?}", report);
-            lora_sender.send(report).await;
+                // aprs_comment.ads.lat = gps.latitude as i16;
+                // aprs_comment.ads.lon = gps.longitude as i16;
+                // aprs_comment.ads.acc_x = sensor_data.ism330dhcx.as_ref().map_or(0, |data| data.accel_x as i16);
+                // aprs_comment.ads.acc_y = sensor_data.ism330dhcx.as_ref().map_or(0, |data| data.accel_y as i16);
+                // aprs_comment.ads.acc_z = sensor_data.ism330dhcx.as_ref().map_or(0, |data| data.accel_z as i16);
+                // aprs_comment.ads.alt = gps.altitude as i16;
+                // aprs_comment.ads.flap_deploy_angle = 0;
+                // aprs_comment.ads.predicted_apogee = 0;
+                // aprs_comment.ads.timestamp = gps.utc_time.itow as i32;
+                // aprs_comment.ads.vel_x = sensor_data.ism330dhcx.as_ref().map_or(0, |data| data.gyro_x as i16);
+                // aprs_comment.ads.vel_y = sensor_data.ism330dhcx.as_ref().map_or(0, |data| data.gyro_y as i16);
+                // aprs_comment.ads.vel_z = sensor_data.ism330dhcx.as_ref().map_or(0, |data| data.gyro_z as i16);
+                // let (lat, long) = compress_lat_lon(gps.latitude, gps.longitude);
+                let data = MiniData {
+                    lat: gps.latitude,
+                    lon: gps.longitude,
+                    alt: gps.altitude,
+                    num_sats: gps.num_sats,
+                    gps_fix: gps.fix_type,
+                    gps_time: gps.utc_time,
+                    baro_alt: sensor_data.bmp390.as_ref().map_or(0.0, |data| data.altitude),
+                    ism_axel_x: sensor_data.ism330dhcx.as_ref().map_or(0.0, |data| data.accel_x),
+                    ism_axel_y: sensor_data.ism330dhcx.as_ref().map_or(0.0, |data| data.accel_y),
+                    ism_axel_z: sensor_data.ism330dhcx.as_ref().map_or(0.0, |data| data.accel_z),
+                    ism_gyro_x: sensor_data.ism330dhcx.as_ref().map_or(0.0, |data| data.gyro_x),
+                    ism_gyro_y: sensor_data.ism330dhcx.as_ref().map_or(0.0, |data| data.gyro_y),
+                    ism_gyro_z: sensor_data.ism330dhcx.as_ref().map_or(0.0, |data| data.gyro_z),
+                    lsm_axel_x: sensor_data.lsm6dso32.as_ref().map_or(0.0, |data| data.accel_x),
+                    lsm_axel_y: sensor_data.lsm6dso32.as_ref().map_or(0.0, |data| data.accel_y),
+                    lsm_axel_z: sensor_data.lsm6dso32.as_ref().map_or(0.0, |data| data.accel_z),
+                    lsm_gyro_x: sensor_data.lsm6dso32.as_ref().map_or(0.0, |data| data.gyro_x),
+                    lsm_gyro_y: sensor_data.lsm6dso32.as_ref().map_or(0.0, |data| data.gyro_y),
+                    lsm_gyro_z: sensor_data.lsm6dso32.as_ref().map_or(0.0, |data| data.gyro_z),
+                    adxl_axel_x: sensor_data.adxl375.as_ref().map_or(0.0, |data| data.accel_x),
+                    adxl_axel_y: sensor_data.adxl375.as_ref().map_or(0.0, |data| data.accel_y),
+                    adxl_axel_z: sensor_data.adxl375.as_ref().map_or(0.0, |data| data.accel_z),
+                    ism_axel_x2: sensor_data.ism330dhcx2.as_ref().map_or(0.0, |data| data.accel_x),
+                    ism_axel_y2: sensor_data.ism330dhcx2.as_ref().map_or(0.0, |data| data.accel_y),
+                    ism_axel_z2: sensor_data.ism330dhcx2.as_ref().map_or(0.0, |data| data.accel_z),
+                    ism_gyro_x2: sensor_data.ism330dhcx2.as_ref().map_or(0.0, |data| data.gyro_x),
+                    ism_gyro_y2: sensor_data.ism330dhcx2.as_ref().map_or(0.0, |data| data.gyro_y),
+                    ism_gyro_z2: sensor_data.ism330dhcx2.as_ref().map_or(0.0, |data| data.gyro_z),
+                };
+                // info!("Sending data: {:?}", data);
+                lora_sender.send(data).await;
         }
+            // let report = AprsCompressedPositionReport { 
+            //     compression_format: '@',
+            //     time: time_to_zulu(gps.utc_time),
+            //     symbol_table: '\\', // Alternative symbol table
+            //     compressed_lat: lat,
+            //     compressed_long: long,
+            //     symbol_code: 'O', // Symbol for rocket
+            //     compressed_altitude: compress_altitude(gps.altitude),
+            //     compression_type: aprs_compression_type.into_bytes()[0] as char, 
+            //     comment: aprs_comment,
+            //     lat: gps.latitude,
+            //     lon: gps.longitude,
+            //     alt: gps.altitude,
+            //     num_sats: gps.num_sats,
+            //     gps_fix: gps.fix_type,
+            // };
+            // info!("Sending report: {:?}", report);
+            
+        // rfd_sender.send(sensor_data).await;
 
-        aprs_comment.msg_id += 1;
+        // aprs_comment.msg_id += 1;
 
         // if let Some(ism_data) = &sensor_data.ism330dhcx {
         //     // info!("ISM330DHCX Data: {:?}", ism_data);
@@ -454,39 +518,47 @@ fn time_to_zulu(time: Mesh::protocol::UTC) -> [u8; 7] {
 //     }
 // }
 
-// #[embassy_executor::task]
-// async fn mavlink_send(mut tx: BufferedUartTx<'static, UART1>, receiver: Receiver<'static, ThreadModeRawMutex, AllSensorData, 0>) {
-//    // info!("Sending heartbeat messages");
-//     loop {
-//         let data = receiver.receive().await;
-//         let buffer = [b'H', b'e', b'l', b'l', b'o', b' ', b'W', b'o', b'r', b'l', b'd', b'!', b'\r', b'\n'];
-
-//         // mavlink::write_versioned_msg(&mut tx, mavlink::MavlinkVersion::V2, MAVLINK_HEADER, &MavMessage::GLOBAL_POSITION_INT(GLOBAL_POSITION_INT_DATA { 
-//         //     time_boot_ms: data.time as u32, 
-//         //     lat: data.lat as i32,
-//         //     lon: data.lon as i32, 
-//         //     alt: data.alt as i32,
-//         //     relative_alt: data.alt_msl as i32,
-//         //     vx: 0, 
-//         //     vy: 0,
-//         //     vz: 0,
-//         //     hdg: 0,
-//         // })).map_err(|e| {
-//         //     info!("Error writing message: {:?}", e);
-//         // }).ok();
-//         tx.write(&buffer).await.expect("Failed to send data");
-//         tx.blocking_flush().expect("Failed to flush data");
-//         // Send a heartbeat message
-//        // info!("Sending heartbeat message");
-//         // mavlink::write_versioned_msg(&mut tx, mavlink::MavlinkVersion::V2, MAVLINK_HEADER, &MAVLINK_HEARTBEAT_MESSAGE).map_err(|e| {
-//         //     info!("Error writing message: {:?}", e);
-//         // }).ok();
-//         tx.blocking_flush().expect("Failed to flush data");
-//         tx.write(b"\r\n").await.expect("Failed to send data");
-//         info!("Sent heartbeat message");
-//         Timer::after_secs(1).await;
-//         }
-// }
+#[embassy_executor::task]
+async fn mavlink_send(mut tx: UartTx<'static, UART1, embassy_rp::uart::Async>, receiver: Receiver<'static, ThreadModeRawMutex, AllSensorData, 1>) {
+    loop {
+        let data = receiver.receive().await;
+        let buffer = match postcard::to_vec::<AllSensorData, 1024>(&data) {
+            Ok(buffer) => buffer,
+            Err(e) => {
+                info!("Error serializing data: {:?}", e);
+                continue;
+            }
+        };
+        match tx.write(&buffer).await {
+            Ok(_) => {
+                // info!("Data sent");
+            }
+            Err(e) => {
+                info!("Failed to send data: {:?}", e);
+            }
+        }
+        // let test: [u8; 11] = [b'H', b'e', b'l', b'l', b'o', b' ', b'W', b'o', b'r', b'l', b'd'];
+        // match tx.write(&test).await {
+        //     Ok(_) => {
+        //         // info!("Test data sent");
+        //     }
+        //     Err(e) => {
+        //         info!("Failed to send test data: {:?}", e);
+        //     }
+        // }
+        match tx.blocking_flush() {
+            Ok(_) => {
+                // info!("Data flushed");
+            }
+            Err(e) => {
+                info!("Failed to flush data: {:?}", e);
+            }
+        }
+        info!("Sent message");
+        // Timer::after_secs(1).await;
+        Timer::after_millis(100).await;
+        }
+}
 
 // #[embassy_executor::task]
 // async fn mavlink_read(rx: BufferedUartRx<'static, UART0>) {
@@ -504,16 +576,17 @@ fn time_to_zulu(time: Mesh::protocol::UTC) -> [u8; 7] {
 // }
 
 #[embassy_executor::task]
-async fn lora_task(mut tx: UartTx<'static, UART0, embassy_rp::uart::Async>, receiver: Receiver<'static, ThreadModeRawMutex, AprsCompressedPositionReport, 1>) {
+async fn lora_task(mut tx: UartTx<'static, UART0, embassy_rp::uart::Async>, receiver: Receiver<'static, CriticalSectionRawMutex, MiniData, 1>) {
     // let test = [0x01u8, 0x02u8, 0x03u8];
     loop {
         // info!("Waiting for data...");
         let data = receiver.receive().await;
         info!("Sending data: {:?}", data);
-        match to_vec::<_,128>(&data) {
+        match to_vec_cobs::<MiniData, 255>(&data) {
             Ok(buffer) => {
-                // info!("Sending data: {:?}", buffer);
-                if let Err(e) = tx.write(&buffer).await {
+                info!("Serialized size: {:?}", buffer.len());
+                info!("Buffer Data: {:?}", buffer);
+                if let Err(e) = tx.blocking_write(&buffer) {
                     info!("Failed to send data: {:?}", e);
                 }
                 if let Err(e) = tx.blocking_flush() {
@@ -526,13 +599,15 @@ async fn lora_task(mut tx: UartTx<'static, UART0, embassy_rp::uart::Async>, rece
             }
         }
         
-        Timer::after_secs(1).await;
+        // Timer::after_secs(1).await;
+        // Timer::after_millis(100).await;
+        Timer::after_millis(5).await;
     }
 }
 
 
 #[embassy_executor::task]
-async fn gps_task(i2c_bus: &'static I2c1Bus, sender: Sender<'static, ThreadModeRawMutex, SensorUpdate, 10>) {
+async fn gps_task(i2c_bus: &'static I2c1Bus, sender: Sender<'static, CriticalSectionRawMutex, SensorUpdate, 20>) {
     info!("Initializing GPS I2C...");
     let i2c_dev = I2cDevice::new(i2c_bus);
     let ublox_config = UBLOX_rs::Configuration {
@@ -542,7 +617,7 @@ async fn gps_task(i2c_bus: &'static I2c1Bus, sender: Sender<'static, ThreadModeR
     };
     info!("Initializing GPS...");
     let mut gps =
-        match UBLOX_rs::UBLOX::<I2cDevice<'_, ThreadModeRawMutex, I2c<'static, I2C1, Async>>, Delay>::try_new(
+        match UBLOX_rs::UBLOX::<I2cDevice<'_, CriticalSectionRawMutex, I2c<'static, I2C1, Async>>, Delay>::try_new(
             i2c_dev,
             UBLOX_rs::Address::Custom(0x42),
             Delay,
@@ -588,6 +663,7 @@ async fn gps_task(i2c_bus: &'static I2c1Bus, sender: Sender<'static, ThreadModeR
         let mut num_satellites = 0;
         let mut fix_type: Mesh::protocol::GpsFix = Default::default();
         let mut time: Mesh::protocol::UTC = Default::default();
+        // let mut sats_data: ublox::NavSat = Default::default();
 
         let data = match gps.get_data().await {
             Ok(Some(data)) => data,
@@ -625,9 +701,9 @@ async fn gps_task(i2c_bus: &'static I2c1Bus, sender: Sender<'static, ThreadModeR
                     // info!("Flags: {:?}", message.flags());
                     // info!("Valid: {:?}", message.valid());
                 
-                    lat = message.lat_degrees();
-                    lon = message.lon_degrees();
-                    alt = message.height_meters();
+                    lat = message.latitude();
+                    lon = message.longitude();
+                    alt = message.height_msl();
                     alt_msl = message.height_msl();
                     num_satellites = message.num_satellites();
                     fix_type = message.fix_type().into();
@@ -646,6 +722,9 @@ async fn gps_task(i2c_bus: &'static I2c1Bus, sender: Sender<'static, ThreadModeR
                         valid: message.valid().bits(),
                     };
                 }
+                // Some(Ok(PacketRef::NavSat(message))) => {
+                //     sats_data = message
+                // }
                 Some(Ok(_packet)) => {
                     //info!("Packet: {:?}", packet);
                 }
@@ -667,7 +746,7 @@ async fn gps_task(i2c_bus: &'static I2c1Bus, sender: Sender<'static, ThreadModeR
                 num_sats: num_satellites,
                 fix_type: fix_type,
                 utc_time: time,
-                sats_data
+                // sats_data
             })).await;
 
             // 250 ms is the minimal recommended delay between reading data on I2C, UART is 1100 ms.
@@ -715,7 +794,7 @@ async fn write_sd(sdcard: SdCard<ExclusiveDevice<Spi<'static, SPI0, spi::Blockin
 }
 
 #[embassy_executor::task]
-async fn bmp390_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, ThreadModeRawMutex, SensorUpdate, 10>) {
+async fn bmp390_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, CriticalSectionRawMutex, SensorUpdate, 20>) {
     let i2c_dev = I2cDevice::new(i2c_bus);
 
     // Set up BMP390
@@ -737,7 +816,7 @@ async fn bmp390_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, ThreadMo
         }, // Off, no filtering against large spikes
     };
     // I2C address is 0x77 (if backside is not shorted) or 0x76 (if backside is shorted)
-    let mut sensor = match Bmp390::<I2cDevice<'_, ThreadModeRawMutex, I2c<'static, I2C0, Async>>>::try_new(
+    let mut sensor = match Bmp390::<I2cDevice<'_, CriticalSectionRawMutex, I2c<'static, I2C0, Async>>>::try_new(
         i2c_dev,
         bmp390::Address::Up,
         Delay,
@@ -768,7 +847,7 @@ async fn bmp390_task(i2c_bus: &'static I2c0Bus, sender: Sender<'static, ThreadMo
 }
 
 #[embassy_executor::task]
-async fn adxl375_task(i2c_bus: &'static I2c1Bus, sender: Sender<'static, ThreadModeRawMutex, SensorUpdate, 10>) {
+async fn adxl375_task(i2c_bus: &'static I2c1Bus, sender: Sender<'static, CriticalSectionRawMutex, SensorUpdate, 20>) {
     let i2c_dev = I2cDevice::new(i2c_bus);
 
     // Set up ADXL375
@@ -823,7 +902,7 @@ async fn error_task(msg: &'static str) {
 }
 
 #[embassy_executor::task]
-async fn ism330dhcx_task2(i2c_bus: &'static I2c1Bus, sender: Sender<'static, ThreadModeRawMutex, SensorUpdate, 10>) {
+async fn ism330dhcx_task2(i2c_bus: &'static I2c1Bus, sender: Sender<'static, CriticalSectionRawMutex, SensorUpdate, 20>) {
     let mut i2c_dev = I2cDevice::new(i2c_bus);
     // Set up ISM330DHCX
     let mut sensor = Ism330Dhcx::new_with_address(
@@ -856,9 +935,17 @@ async fn ism330dhcx_task2(i2c_bus: &'static I2c1Bus, sender: Sender<'static, Thr
         .expect("Error initializing ISM330DHCX");
 
     loop {
-        let _measurement = sensor.get_measurement(&mut i2c_dev).await.unwrap();
+        let _measurement = match sensor.get_measurement(&mut i2c_dev).await {
+            Ok(measurement) => measurement,
+            Err(_) => {
+                loop {
+                    info!("Error reading ISM330DHCX2 data");
+                    Timer::after_millis(1000).await;
+                }
+            }
+        };
 
-        sender.send(SensorUpdate::ISM330DHCX(
+        sender.send(SensorUpdate::ISM330DHCX2(
             Mesh::protocol::ISM330DHCX {
                 temp: _measurement.temp,
                 gyro_x: _measurement.gyro.as_dps().await[0],
@@ -873,7 +960,7 @@ async fn ism330dhcx_task2(i2c_bus: &'static I2c1Bus, sender: Sender<'static, Thr
     }
 }
 #[embassy_executor::task]
-async fn ism330dhcx_task(i2c_bus: &'static I2c0Bus, ism_options: ism330dhcx::Options, sender: Sender<'static, ThreadModeRawMutex, SensorUpdate, 10>) {
+async fn ism330dhcx_task(i2c_bus: &'static I2c0Bus, ism_options: ism330dhcx::Options, sender: Sender<'static, CriticalSectionRawMutex, SensorUpdate, 20>) {
     let mut i2c_dev = I2cDevice::new(i2c_bus);
     // Set up ISM330DHCX
     let mut sensor = Ism330Dhcx::new_with_address(
@@ -903,7 +990,7 @@ async fn ism330dhcx_task(i2c_bus: &'static I2c0Bus, ism_options: ism330dhcx::Opt
 }
 
 #[embassy_executor::task]
-async fn lsm6dso32_task(i2c_bus: &'static I2c0Bus, options: LSM6DSO32::Options, sender: Sender<'static, ThreadModeRawMutex, SensorUpdate, 10>) {
+async fn lsm6dso32_task(i2c_bus: &'static I2c0Bus, options: LSM6DSO32::Options, sender: Sender<'static, CriticalSectionRawMutex, SensorUpdate, 20>) {
     let mut i2c_dev = I2cDevice::new(i2c_bus);
 
     // Set up LSM6DSO32
