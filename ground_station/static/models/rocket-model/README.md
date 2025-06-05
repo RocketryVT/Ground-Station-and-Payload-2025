@@ -1,1 +1,0 @@
-Model from: https://data.nasa.gov/Management-Operations/NASA-3D-Models-Saturn-V/3t3k-fcjz/about_data
