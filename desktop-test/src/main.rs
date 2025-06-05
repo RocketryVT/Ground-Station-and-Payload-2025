@@ -33,12 +33,12 @@ fn main() {
 
     // Write CSV header
     output_file.write_record(&[
-        "lat", "lon", "alt", "num_sats", "gps_fix", "gps_time_itow", "gps_time_time_accuracy_estimate_ns",
+        "time_since_boot", "msg_num", "lat", "lon", "alt", "num_sats", "gps_fix", "gps_time_itow", "gps_time_time_accuracy_estimate_ns",
         "gps_time_nanos", "gps_time_year", "gps_time_month", "gps_time_day", "gps_time_hour", "gps_time_min",
         "gps_time_sec", "gps_time_valid", "baro_alt", "ism_axel_x", "ism_axel_y", "ism_axel_z", "ism_gyro_x",
         "ism_gyro_y", "ism_gyro_z", "lsm_axel_x", "lsm_axel_y", "lsm_axel_z", "lsm_gyro_x", "lsm_gyro_y",
         "lsm_gyro_z", "adxl_axel_x", "adxl_axel_y", "adxl_axel_z", "ism_axel_x2", "ism_axel_y2", "ism_axel_z2",
-        "ism_gyro_x2", "ism_gyro_y2", "ism_gyro_z2",
+        "ism_gyro_x2", "ism_gyro_y2", "ism_gyro_z2", "time_as_string",
     ]).unwrap_or_else(|err| {
         eprintln!("Failed to write CSV header: {:?}", err);
     });
@@ -59,7 +59,21 @@ fn main() {
                         let line = buffer.drain(..=newline_index).collect::<String>().trim().to_string();
                         match parse_csv_line(&line.trim()) {
                             Ok(data) => {
-                                output_file.write_record(line.split(',')).unwrap_or_else(|err| {
+                                let excel_time = format!(
+                                    "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+                                    data.gps_time.year,
+                                    data.gps_time.month,
+                                    data.gps_time.day,
+                                    data.gps_time.hour,
+                                    data.gps_time.min,
+                                    data.gps_time.sec
+                                );
+                                output_file
+                                    .write_record(
+                                        line.split(',')
+                                            .chain(std::iter::once(excel_time.as_str())),
+                                )
+                                .unwrap_or_else(|err| {
                                     eprintln!("Failed to write record to CSV: {:?}", err);
                                 });
                                 output_file.flush().unwrap_or_else(|err| {
@@ -67,7 +81,9 @@ fn main() {
                                 });
                                 
                                 println!(
-                                    "Lat: {}, Long: {}, GPS Alt: {}, Num of Sats: {}, GPS Fix: {:?}, Baro Alt: {}",
+                                    "Time Since Boot: {}, MSG Num: {}, Lat: {}, Long: {}, GPS Alt: {}, Num of Sats: {}, GPS Fix: {:?}, Baro Alt: {}",
+                                    data.time_since_boot,
+                                    data.msg_num,
                                     data.lat,
                                     data.lon,
                                     data.alt,

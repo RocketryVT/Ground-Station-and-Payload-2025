@@ -1,0 +1,3 @@
+2025-05-20T18:53:57.992763Z  INFO ground_station_2: Terminal initialized
+2025-05-20T18:53:57.992825Z  INFO ground_station_2: Starting LoRa serial thread
+2025-05-20T18:53:57.992836Z  INFO ground_station_2: Starting main loop
