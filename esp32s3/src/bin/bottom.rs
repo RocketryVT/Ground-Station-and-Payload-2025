@@ -1,14 +1,14 @@
 #![no_std]
 #![no_main]
-// use defmt::*;
+
 use embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice;
-// use embassy_embedded_hal::shared_bus::asynch::i2c::I2cDevice;
 use embassy_executor::Spawner;
 
 use embassy_sync::channel::Channel;
 use embassy_sync::mutex::Mutex;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use esp_backtrace as _;
+use esp_alloc as _;
 use esp_hal::spi::{master::Config, master::Spi, Mode};
 use esp_hal::time::Rate;
 use esp_hal::Async;
@@ -16,7 +16,7 @@ use esp_hal::timer::timg::TimerGroup;
 use esp_hal::i2c::master::I2c;
 use esp_println::println;
 
-use embassy_time::{Delay, Timer};
+use embassy_time::{Delay, Instant, Timer};
 
 use lora_phy::iv::GenericSx126xInterfaceVariant;
 use lora_phy::sx126x::{Sx1262, Sx126x, TcxoCtrlVoltage};
@@ -27,10 +27,7 @@ use Mesh::protocol::{AllSensorData, MiniData, SensorUpdate};
 
 const LORA_FREQUENCY_IN_HZ: u32 = 905_200_000; // warning: set this appropriately for the region
 
-// type ChannelBuffer = [u8; 96];
-// static CHANNEL: StaticCell<ZeroChannel<'_, NoopRawMutex, ChannelBuffer>> = StaticCell::new();
 static GPS_CHANNEL: Channel<CriticalSectionRawMutex, Mesh::protocol::SensorUpdate, 10> = Channel::new();
-
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
@@ -58,7 +55,7 @@ async fn main(spawner: Spawner) {
     let i2c0_scl = peripherals.GPIO39;
     let i2c0_sda = peripherals.GPIO40;
     let i2c_config = esp_hal::i2c::master::Config::default()
-        .with_frequency(Rate::from_khz(400));
+        .with_frequency(Rate::from_khz(50));
     let i2c0 = I2c::new(peripherals.I2C1, i2c_config)
         .unwrap()
         .with_scl(i2c0_scl)
@@ -140,15 +137,6 @@ async fn main(spawner: Spawner) {
         }
     }
 
-    // let mut aprs_report = AprsCompressedPositionReport::default();
-    // aprs_report.comment.uid = 2;
-    // aprs_report.comment.destination_uid = 0;
-    // aprs_report.comment.msg_id = 0;
-    // aprs_report.comment.hops_left = 3;
-    // aprs_report.comment.comment_type = Mesh::protocol::DeviceType::Bottom;
-    // aprs_report.comment.msg_type = Mesh::protocol::MessageType::Data;
-    // aprs_report.comment.team_number = 190;
-
     // let mut nav_sat = Mesh::protocol::NavSat::default();
     let mut mini_data = MiniData::default();
 
@@ -161,16 +149,14 @@ async fn main(spawner: Spawner) {
         ism330dhcx2: None,
     };
 
-    // static BUF: StaticCell<[ChannelBuffer; 1]> = StaticCell::new();
-    // let buf = BUF.init([[0; 96]; 1]);
-    // let channel = CHANNEL.init(ZeroChannel::new(buf));
-    // let (sender, mut receiver) = channel.split();
     let gps_reciever = GPS_CHANNEL.receiver();
+    let mut msg_num = 0;
 
     loop {
 
-        // let buffer = receiver.receive().await;
         let gps_buffer = gps_reciever.receive().await;
+
+        println!("Received GPS data: {:?}", gps_buffer);
 
         match gps_buffer {
             SensorUpdate::GPS(gps) => {
@@ -181,11 +167,10 @@ async fn main(spawner: Spawner) {
 
         match sensor_data.gps {
             Some(ref gps) => {
-                // aprs_report.lat = gps.latitude;
-                // aprs_report.lon = gps.longitude;
-                // aprs_report.alt = gps.altitude;
-                // nav_sat = gps.sats_data;
                 mini_data = MiniData {
+                    time_since_boot: Instant::now().as_millis(),
+                    msg_num: msg_num,
+                    device_id: 1,
                     lat: gps.latitude,
                     lon: gps.longitude,
                     alt: gps.altitude,
@@ -219,22 +204,7 @@ async fn main(spawner: Spawner) {
             None => {}
         };
 
-        // println!("Sending APRS Report: {:?}", aprs_report);
-
-        // let buffer: heapless::Vec<u8, 96> = match postcard::to_vec(&aprs_report) {
-        //     Ok(b) => b,
-        //     Err(err) => {
-        //         println!("Serialization error = {:?}", err);
-        //         heapless::Vec::new()
-        //     }
-        // };
-
-        // println!("Sending NavSat: {:?}", nav_sat);
-
-        
-
-
-        let buffer: heapless::Vec<u8, 208> = match postcard::to_vec_cobs(&mini_data) {
+        let buffer: heapless::Vec<u8, 255> = match postcard::to_vec_cobs(&mini_data) {
             Ok(b) => b,
             Err(err) => {
                 println!("Serialization error = {:?}", err);
@@ -262,15 +232,8 @@ async fn main(spawner: Spawner) {
                 return;
             }
         };
-        // Locks the Mutex
-        // receiver.receive_done();
 
-        // match lora.sleep(false).await {
-        //     Ok(()) => println!("Sleep successful"),
-        //     Err(err) => println!("Sleep unsuccessful = {:?}", err),
-        // }
-        
-        // aprs_report.comment.msg_id += 1;
+        msg_num += 1;
 
         // Timer::after_secs(1).await;
         Timer::after_millis(199).await;
@@ -286,6 +249,7 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
         output_ubx: true,
         output_rtcm: false,
     };
+    Timer::after_secs(5).await;
     println!("Initializing GPS...");
     let mut gps =
         match UBLOX_rs::UBLOX::<I2cDevice<'_, CriticalSectionRawMutex, I2c<'static, Async>>, Delay>::try_new(
@@ -302,26 +266,38 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
             }
          };
 
-    // gps.set_airborne_4g().await.expect("Failed to set airborne 4G mode");
+    Timer::after_secs(1).await;
     match gps.set_i2c_timeout_none().await {
-        Ok(()) => println!("I2C timeout set to none"),
-        Err(e) => println!("Failed to set I2C timeout: {:?}", e),
+        Ok(()) => println!("GPS I2C timeout set to none"),
+        Err(e) => println!("Failed to set GPS I2C timeout: {:?}", e),
     }
-    // gps.disable_nmea_i2c().await.expect("Failed to disable NMEA over I2C");
-    println!("Enabling UBX NAV PVT and UBX TIME UTC...");
+
+    Timer::after_secs(1).await;
+    match gps.set_airborne_4g().await {
+        Ok(()) => println!("GPS set to airborne 4G mode"),
+        Err(e) => println!("Failed to set GPS to airborne 4G mode: {:?}", e),
+    }
+    Timer::after_secs(1).await;
+    match gps.disable_nmea_i2c().await {
+        Ok(()) => println!("NMEA output disabled on I2C"),
+        Err(e) => println!("Failed to disable NMEA output on I2C: {:?}", e),
+    }
+    Timer::after_secs(1).await;
+    match gps.enable_i2c_ubx_nav_pvt().await {
+        Ok(()) => println!("UBX NAV PVT enabled on I2C"),
+        Err(e) => println!("Failed to enable UBX NAV PVT on I2C: {:?}", e),
+    }
+    Timer::after_secs(1).await;
     match gps.enable_ubx_nav_pvt().await {
         Ok(()) => println!("UBX NAV PVT enabled"),
         Err(e) => println!("Failed to enable UBX NAV PVT: {:?}", e),
     }
+    Timer::after_secs(1).await;
     match gps.enable_ubx_time_utc().await {
         Ok(()) => println!("UBX TIME UTC enabled"),
         Err(e) => println!("Failed to enable UBX TIME UTC: {:?}", e),
     }
-    match gps.enable_i2c_ubx_nav_sat().await {
-        Ok(()) => println!("UBX NAV SAT enabled"),
-        Err(e) => println!("Failed to enable UBX NAV SAT: {:?}", e),
-    }
-    Timer::after_millis(500).await; // Wait for the GPS to start sending data (Ideally, the library should handle this but this will do for now)
+    Timer::after_secs(3).await; // Wait for the GPS to start sending data (Ideally, the library should handle this but this will do for now)
 
     println!("GPS initialized");
 
@@ -330,10 +306,7 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
     let fixed_buffer = FixedLinearBuffer::new(&mut data_buffer);
     let mut parser = Parser::new(fixed_buffer);
 
-   // println!("Reading GPS data...");
-
     loop {
-
         let mut lat = 0.0;
         let mut lon = 0.0;
         let mut alt = 0.0;
@@ -341,7 +314,8 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
         let mut num_satellites = 0;
         let mut fix_type: Mesh::protocol::GpsFix = Default::default();
         let mut time: Mesh::protocol::UTC = Default::default();
-        // let mut sats_data: Mesh::protocol::NavSat = Default::default();
+        let mut recieved_gps = false;
+        let mut recieved_time = false;
 
         let data = match gps.get_data().await {
             Ok(Some(data)) => data,
@@ -358,33 +332,13 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
         loop {
             match output.next() {
                 Some(Ok(PacketRef::NavPvt(message))) => {
-                    // println!("Latitude: {}, Longitude: {}", message.lat_degrees(), message.lon_degrees());
-                    // println!("Altitude: {} m", message.height_meters());
-                    // println!("Altitude MSL: {} m", message.height_msl());
-                    // println!("Ground Speed: {} m/s", message.ground_speed());
-                    // let vel_north = message.vel_north() as f32;
-                    // let vel_east = message.vel_east() as f32;
-                    // let vel_down = message.vel_down() as f32;
-                    // let true_airspeed = (vel_north * vel_north + vel_east * vel_east + vel_down * vel_down) * SQRT_2;
-                    // let altitude = message.height_msl() as f32;
-                    // let mach_speed = true_airspeed / calculate_speed_of_sound(altitude);
-                    // println!("True Airspeed: {} m/s", true_airspeed);
-                    // println!("Mach Speed: {}", mach_speed);
-                    // println!("Velocity North: {} m/s", vel_north);
-                    // println!("Velocity East: {} m/s", vel_east);
-                    // println!("Velocity Down: {} m/s", vel_down);
-                    // println!("Heading: {} degrees", message.heading_degrees());
-                    // println!("Number of Satellites: {}", message.num_satellites());
-                    // println!("Fix Type: {:?}", message.fix_type());
-                    // println!("Flags: {:?}", message.flags());
-                    // println!("Valid: {:?}", message.valid());
-                
                     lat = message.latitude();
                     lon = message.longitude();
                     alt = message.height_msl();
                     alt_msl = message.height_msl();
                     num_satellites = message.num_satellites();
                     fix_type = message.fix_type().into();
+                    recieved_gps = true;
                 }
                 Some(Ok(PacketRef::NavTimeUTC(message))) => {   
                     time = Mesh::protocol::UTC { 
@@ -399,54 +353,8 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
                         sec: message.sec(),
                         valid: message.valid().bits(),
                     };
+                    recieved_time = true;
                 }
-                // Some(Ok(PacketRef::NavSat(message))) => {
-                //     println!("Satellite: {:?}", message);
-                //     // itor: GPS Time of Week
-                //     // version: Message version
-                //     // num_svs: Number of satellites 
-                //     // svs: Satellite data array.
-                //     // message.svs().for_each(|sv| {
-                //     //     println!("Satellite: {:?}", sv);
-                //     //     sv.cno();
-                //     // });
-                //     sats_data = Mesh::protocol::NavSat {
-                //         itow: message.itow(),
-                //         version: message.version(),
-                //         num_svs: message.num_svs(),
-                //         svs: {
-                //         let mut array = [None; 32]; // Initialize a fixed-size array with `None`
-                //         for (i, sv) in message.svs().take(32).enumerate() {
-                //             array[i] = Some(Mesh::protocol::NavSatSvInfo {
-                //                 gnss_id: sv.gnss_id(),
-                //                 sv_id: sv.sv_id(),
-                //                 cno: sv.cno(),
-                //                 elev: sv.elev(),
-                //                 azim: sv.azim(),
-                //                 pr_res: sv.pr_res(),
-                //                 flags: Mesh::protocol::NavSatSvFlags { 
-                //                     quality_ind: sv.flags().quality_ind().into(),
-                //                     sv_used: sv.flags().sv_used(),
-                //                     health: sv.flags().health().into(),
-                //                     differential_correction_available: sv.flags().differential_correction_available(),
-                //                     smoothed: sv.flags().smoothed(),
-                //                     orbit_sources: sv.flags().orbit_source().into(),
-                //                     ephemeris_available: sv.flags().ephemeris_available(),
-                //                     almanac_available: sv.flags().almanac_available(),
-                //                     an_offline_available: sv.flags().an_offline_available(),
-                //                     an_auto_available: sv.flags().an_auto_available(),
-                //                     sbas_corr: sv.flags().sbas_corr(),
-                //                     rtcm_corr: sv.flags().rtcm_corr(),
-                //                     slas_corr: sv.flags().slas_corr(),
-                //                     spartn_corr: sv.flags().spartn_corr(),
-                //                     pr_corr: sv.flags().pr_corr(),
-                //                     cr_corr: sv.flags().cr_corr(),
-                //                     do_corr: sv.flags().do_corr(),
-                //                 },
-                //             });
-                //         }
-                //     array}};
-                // }
                 Some(Ok(_packet)) => {
                     // println!("Packet: {:?}", _packet);
                 }
@@ -456,9 +364,15 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
                 }
                 None => {
                     // The internal buffer is now empty
-                    // break;
+                    break;
                 }
             }
+
+            if !recieved_gps || !recieved_time {
+                continue;
+            }
+            recieved_gps = false;
+            recieved_time = false;
 
             sender.send(SensorUpdate::GPS(Mesh::protocol::GPS { 
                 latitude: lat, 
@@ -468,12 +382,10 @@ async fn gps_task(i2c_bus: Mutex<CriticalSectionRawMutex, I2c<'static, Async>>, 
                 num_sats: num_satellites,
                 fix_type: fix_type,
                 utc_time: time,
-                // sats_data,
             })).await;
-
-            // 250 ms is the minimal recommended delay between reading data on I2C, UART is 1100 ms.
-            Timer::after_millis(250).await;
         }
+        // 250 ms is the minimal recommended delay between reading data on I2C, UART is 1100 ms.
+        Timer::after_millis(1000).await;
     }
 }
 
