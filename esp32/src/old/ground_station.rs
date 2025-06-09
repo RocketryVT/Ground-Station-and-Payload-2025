@@ -138,10 +138,10 @@ async fn main(_spawner: Spawner) {
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     esp_hal_embassy::init(timg0.timer0);
 
-    let mut config = esp_hal::uart::Config::default()
+    let config = esp_hal::uart::Config::default()
         .with_baudrate(115200);
 
-    let mut uart = Uart::new(
+    let uart = Uart::new(
         peripherals.UART0,
         config,
     ).unwrap();
@@ -192,7 +192,7 @@ async fn main(_spawner: Spawner) {
     let lora_mosi = peripherals.GPIO23;
     let lora_miso = peripherals.GPIO19;
     let lora_rst = esp_hal::gpio::Output::new(peripherals.GPIO5, esp_hal::gpio::Level::High, output_config);
-    let lora_dio0 = esp_hal::gpio::Input::new(peripherals.GPIO21, input_config);
+    // let lora_dio0 = esp_hal::gpio::Input::new(peripherals.GPIO21, input_config);
     let lora_dio1 = esp_hal::gpio::Input::new(peripherals.GPIO22, input_config);
 
     // Enable the fan
@@ -286,12 +286,14 @@ async fn main(_spawner: Spawner) {
         match lora.rx(&rx_pkt_params, &mut receiving_buffer).await {
             Ok((received_len, _rx_pkt_status)) => {
                 let received_data = &mut receiving_buffer[..received_len as usize];
-                // println!("{:?}", received_data);
+                println!("{:?}", received_data);
                 let data: Result<MiniData, _> = from_bytes_cobs(received_data);
                 match data {
                     Ok(report) => {
                         println!(
-                            "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+                            "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+                            report.time_since_boot,
+                            report.msg_num,
                             report.lat,
                             report.lon,
                             report.alt,

@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package rocketry;
+
+option swift_prefix = "RKT";
+
+// The unified message format for all tracker data
+message TrackerPacket {
+  // Common fields for all packet types
+  uint32 device_id = 1;
+  uint32 msg_num = 2;
+  fixed64 time_since_boot = 3;
+  
+  // Enum to identify the payload type
+  enum PacketType {
+    UNKNOWN = 0;
+    GPS = 1;            // GPS position data
+    ISM_PRIMARY = 2;    // Primary IMU data
+    ISM_SECONDARY = 3;  // Secondary IMU data 
+    LSM = 4;            // LSM6DSO32 IMU data
+    ACCEL = 5;          // ADXL accelerometer
+    BARO = 6;           // Barometer
+    USER_LOCATION = 7;  // User's phone location
+  }
+  PacketType packet_type = 4;
+  
+  // The actual payload (only one will be set per packet)
+  oneof payload {
+    GpsData gps = 5;
+    ImuData imu = 6;
+    AccelData accel = 7;
+    BaroData baro = 8;
+    UserLocation user_location = 9;
+  }
+}
+
+// GPS Fix type enumeration
+enum GpsFix {
+  UNKNOWN_GPSFIX = 0;                     // Unknown fix type (protobuf treats 0 enums as unset)
+  NO_FIX = 1;
+  DEAD_RECKONING_ONLY = 2;
+  FIX_2D = 3;
+  FIX_3D = 4;
+  GPS_PLUS_DEAD_RECKONING = 5;
+  TIME_ONLY_FIX = 6;
+}
+
+
+// GPS position data (simplified from MiniData)
+message GpsData {
+  double lat = 1;
+  double lon = 2;
+  double alt = 3;
+  uint32 num_sats = 4;
+  GpsFix fix_type = 5;
+  uint32 itow = 6;                        // GPS Millisecond Time of Week
+  uint32 time_accuracy_estimate_ns = 7;
+  int32 nanos = 8;                        // Nanoseconds of second, range -1e9 .. 1e9
+  int32 year = 9;                         // Year, range 1999..2099
+  int32 month = 10;                       // Month, range 1..12
+  int32 day = 11;                         // Day of Month, range 1..31
+  int32 hour = 12;                        // Hour of Day, range 0..23
+  int32 min = 13;                         // Minute of Hour, range 0..59
+  int32 sec = 14;                         // Seconds of Minute, range 0..59
+  int32 valid = 15;
+}
+
+message ImuData {
+  double accel_x = 1;             // Accelerometer X-axis
+  double accel_y = 2;             // Accelerometer Y-axis
+  double accel_z = 3;             // Accelerometer Z-axis
+  double gyro_x = 4;              // Gyroscope X-axis
+  double gyro_y = 5;              // Gyroscope Y-axis
+  double gyro_z = 6;              // Gyroscope Z-axis
+}
+
+message AccelData {
+  double accel_x = 1;             // Accelerometer X-axis
+  double accel_y = 2;             // Accelerometer Y-axis
+  double accel_z = 3;             // Accelerometer Z-axis
+}
+
+message BaroData {
+  double altitude = 1;             // Altitude in meters
+}
+
+message UserLocation {
+  double lat = 1;                     // Latitude in degrees
+  double lon = 2;                     // Longitude in degrees
+}

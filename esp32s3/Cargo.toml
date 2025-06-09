@@ -1,5 +1,5 @@
 [package]
-name = "esp32-rust-test"
+name = "esp32s3-telemetry"
 version = "0.1.0"
 authors = ["Gregory Wainer <greg.wainer@gmail.com>"]
 edition = "2021"
@@ -13,8 +13,9 @@ bytemuck = { version = "1.21", features = ["derive"] }
 
 embassy-executor    = { version = "0.7", features = ["task-arena-size-12288"] }
 embassy-futures = "0.1"
-embassy-sync = { version = "0.6" }
+embassy-sync = { version = "0.6.2" }
 embassy-time        = { version = "0.4" , features = ["generic-queue-8"] }
+# embassy-time = { git = "https://github.com/embassy-rs/embassy", features = ["generic-queue-8"]}
 embassy-usb         = { version = "0.4", default-features = false }
 embassy-embedded-hal = "0.3"
 embedded-hal-async = "1.0"
@@ -34,13 +35,14 @@ esp-backtrace = { version = "0.15", features = [
     "panic-handler",
     "println",
 ] }
-esp-hal = {  features = ["log", "unstable" ], git = "https://github.com/esp-rs/esp-hal.git"}
+esp-hal = {  features = ["unstable" ], git = "https://github.com/esp-rs/esp-hal.git"}
 esp-hal-embassy = {  features = [], git = "https://github.com/esp-rs/esp-hal.git"} # "integrated-timers"
 esp-println = { version = "0.13", features = ["log"] }
 esp-storage = { version = "0.5", features = [] }
-esp-wifi = { features = ["log", "esp-alloc", "ble"], git="https://github.com/esp-rs/esp-hal.git" }
+esp-wifi = { features = ["esp-alloc", "ble"], git="https://github.com/esp-rs/esp-hal.git" }
+# trouble-host = { git="https://github.com/embassy-rs/trouble.git", rev="b6694cf00b602efe9c1c6e639e97218ebf623479" }
+trouble-host = { git="https://github.com/embassy-rs/trouble.git" }
 bt-hci = { version = "0.3" }
-trouble-host = { git="https://github.com/embassy-rs/trouble.git", rev="b6694cf00b602efe9c1c6e639e97218ebf623479" }
 bitflags ={ version = "2.9"}
 
 fugit = "0.3"
@@ -69,6 +71,9 @@ dummy-pin = "1.0"
 Mesh = { path = "../libs/Mesh" }
 ssd1306 = "0.10"
 embedded-graphics = "0.8"
+serde_json = { version = "1.0", default-features = false, features = ["alloc"]}
+prost = { version = "0.13.5", default-features = false, features = ["derive"] }
+# bincode = "2.0.1"
 
 [features]
 default = ["esp32s3"]
@@ -76,6 +81,7 @@ esp32s3 = ["esp-hal/esp32s3", "esp-hal-embassy/esp32s3", "esp-println/esp32s3", 
 
 [build-dependencies]
 embuild = "0.33"
+prost-build = "0.13"
 
 [profile.dev]
 # Rust debug is too slow.

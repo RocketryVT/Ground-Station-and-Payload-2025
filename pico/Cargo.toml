@@ -33,8 +33,6 @@ embedded-hal-bus = { version = "0.3", features = ["async"]}
 embedded-io-async = { version = "0.6", features = ["defmt-03"] }
 embedded-storage = { version = "0.3" }
 
-mavlink = { version = "0.13", features = ["common", "embedded"], default-features = false}
-
 static_cell = { version = "2.1" }
 portable-atomic = { version = "1.11", features = ["critical-section"] }
 chrono = { version = "0.4", default-features = false}

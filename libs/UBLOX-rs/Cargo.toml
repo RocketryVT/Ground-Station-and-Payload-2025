@@ -29,6 +29,8 @@ path = "src/lib.rs"
 
 [dependencies]
 embassy-time = "0.4"
+# embassy-time = { git = "https://github.com/embassy-rs/embassy" }
+
 embedded-hal = "1.0"
 embedded-hal-async = "1.0"
 embedded-io = "0.6"

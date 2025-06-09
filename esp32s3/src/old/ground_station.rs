@@ -10,6 +10,7 @@ use esp_hal::time::Rate;
 use esp_println::println;
 
 use esp_backtrace as _;
+use esp_alloc as _;
 use esp_hal::timer::timg::TimerGroup;
 
 use lora_phy::iv::GenericSx126xInterfaceVariant;
@@ -19,7 +20,7 @@ use lora_phy::{LoRa, RxMode};
 
 const RF_FREQUENCY: u32 = 905_200_000;
 
-use Mesh::protocol::{AprsCompressedPositionReport, NavSat};
+use Mesh::protocol::NavSat;
 use postcard::from_bytes;
 use num_traits::Float;
 

@@ -237,6 +237,24 @@ where
         Ok(())
     }
 
+    pub async fn poll_ubx_nav_pvt(&mut self) -> Result<(), Error<E>> {
+        // Poll the UBX-NAV-PVT message
+        // B5 62 01 07 00 00 08 19
+        let ubx_cfg_valset_ram: [u8; 8] = [
+            0xB5, 0x62, 0x01, 0x07, 0x00, 0x00, 0x08, 0x19,
+        ];
+        self.i2c
+            .write(self.address.into(), &ubx_cfg_valset_ram)
+            .await
+            .map_err(Error::I2c)?;
+
+        // Wait for the module to process the command, this takes 100ms for any message
+        // However the effect of the command is not immediate, and each message has its own delay.
+        self.delay.delay_ms(100).await;
+
+        Ok(())
+    }
+
     pub async fn enable_i2c_ubx_nav_sat(&mut self) -> Result<(), Error<E>> {
         let ubx_cfg_valset_ram: [u8; 17] = [
             0xB5, 0x62, 0x06, 0x8A, 0x09, 0x00, 0x01, 0x01, 0x00, 0x00, 0x15, 0x00, 0x91, 0x20, 0x01, 0x62, 0x97
@@ -307,10 +325,7 @@ where
         self.i2c.read(self.address.into(), &mut data[0..bytes_to_read as usize])
             .await
             .map_err(Error::I2c)?;
-
-        // for byte in data {
-        //     self.process(byte, incoming_ubx, requested_class, requested_id);
-        // }
+        
         Ok(Some(data))
     }
 
@@ -381,6 +396,75 @@ where
 
     pub async fn read(&mut self, buffer: &mut [u8]) -> Result<(), Error<E>> {
         self.uart.read(buffer).await.map_err(Error::Uart)?;
+        Ok(())
+    }
+
+    pub async fn get_data(&mut self) -> Result<Option<[u8; 128]>, Error<E>> {
+        let mut data = [0u8; 128];
+        match self.uart.read(&mut data).await {
+            Ok(n) if n > 0 => {
+                // If you want to return only the bytes read, you can copy to a smaller array or return a tuple (buffer, len)
+                // Here, we return the full buffer for compatibility, but you may want to return (data, n)
+                Ok(Some(data))
+            }
+            Ok(_) => Ok(None), // No data read
+            Err(e) => Err(Error::Uart(e)),
+        }
+    }
+
+    /// B5 62 06 8A 09 00 01 01 00 00 21 00 11 20 08 F5 5A // CFG-NAVSPG-DYNMODEL-RAM val 8 = Airborne <4g
+    pub async fn set_airborne_4g(&mut self) -> Result<(), Error<E>> {
+        let ubx_cfg_valset_ram: [u8; 17] = [
+            0xB5, 0x62, 0x06, 0x8A, 0x09, 0x00, 0x01, 0x01,
+            0x00, 0x00, 0x21, 0x00, 0x11, 0x20, 0x08, 0xF5, 0x5A
+        ];
+        self.uart
+            .write(&ubx_cfg_valset_ram)
+            .await
+            .map_err(Error::Uart)?;
+        self.delay.delay_ms(100).await;
+        Ok(())
+    }
+
+    /// B5 62 06 8A 09 00 01 01 00 00 01 00 74 10 01 21 BC // CFG-UART1OUTPROT-NMEA-RAM
+    pub async fn enable_ubx_uart(&mut self) -> Result<(), Error<E>> {
+        let ubx_cfg_valset_ram: [u8; 17] = [
+            0xB5, 0x62, 0x06, 0x8A, 0x09, 0x00, 0x01, 0x01,
+            0x00, 0x00, 0x01, 0x00, 0x74, 0x10, 0x01, 0x21, 0xBC
+        ];
+        self.uart
+            .write(&ubx_cfg_valset_ram)
+            .await
+            .map_err(Error::Uart)?;
+        self.delay.delay_ms(100).await;
+        Ok(())
+    }
+
+    /// B5 62 06 8A 09 00 01 01 00 00 02 00 74 10 00 21 C0 // CFG-UART1OUTPROT-NMEA-RAM
+    pub async fn disable_nmea_uart(&mut self) -> Result<(), Error<E>> {
+        let ubx_cfg_valset_ram: [u8; 17] = [
+            0xB5, 0x62, 0x06, 0x8A, 0x09, 0x00, 0x01, 0x01,
+            0x00, 0x00, 0x02, 0x00, 0x72, 0x10, 0x00, 0x21, 0xC0
+        ];
+        self.uart
+            .write(&ubx_cfg_valset_ram)
+            .await
+            .map_err(Error::Uart)?;
+        self.delay.delay_ms(100).await;
+        Ok(())
+    }
+
+    // B5 62 06 8A 09 00 01 01 00 00 07 00 91 20 01 54 51 // CFG-MSGOUT-UBX-NAV-PVT-UART1-RAM
+    pub async fn enable_uart_ubx_nav_pvt(&mut self) -> Result<(), Error<E>> {
+        let ubx_cfg_valset_ram: [u8; 17] = [
+            0xB5, 0x62, 0x06, 0x8A, 0x09, 0x00, 0x01, 0x01,
+            0x00, 0x00, 0x07, 0x00, 0x91, 0x20, 0x01, 0x54, 0x51
+        ];
+        self.uart
+            .write(&ubx_cfg_valset_ram)
+            .await
+            .map_err(Error::Uart)?;
+        self.delay.delay_ms(100).await;
         Ok(())
     }
 

@@ -77,6 +77,7 @@ const SENSORS_DPS_TO_RADS: f64 = 0.017453292;
 const SENSORS_GRAVITY_STANDARD: f64 = 9.80665;
 pub const DEFAULT_I2C_ADDRESS: u8 = 0x6b;
 
+#[derive(Clone, Copy)]
 pub struct Options {
     pub device: DeviceOptions,
     pub dimension: DimensionOptions,
@@ -85,24 +86,28 @@ pub struct Options {
     pub disable_high_performance: bool,
 }
 
+#[derive(Clone, Copy)]
 pub struct DeviceOptions {
     pub set_boot: bool,
     pub set_bdu: bool,
     pub set_if_inc: bool,
 }
 
+#[derive(Clone, Copy)]
 pub struct DimensionOptions {
     pub set_den_x: bool,
     pub set_den_y: bool,
     pub set_den_z: bool,
 }
 
+#[derive(Clone, Copy)]
 pub struct AccelerometerOptions {
     pub accelerometer_rate: ctrl1xl::Odr_Xl,
     pub accelerometer_range: ctrl1xl::Fs_Xl,
     pub enable_low_pass_filter: bool,
 }
 
+#[derive(Clone, Copy)]
 pub struct GyroOptions {
     pub gyro_rate: ctrl2g::Odr,
     pub gyro_range: ctrl2g::Fs,

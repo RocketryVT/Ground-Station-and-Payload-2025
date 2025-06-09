@@ -1,5 +1,7 @@
 # ADS LoRa RF Project
 
+protoc --swift_out=. src/data.proto
+
 ## Introduction
 
 This project uses Rust Embassy combined with a Heltec WiFi LoRa 32 V3.

@@ -5,46 +5,34 @@ use esp_hal::time::Rate;
 
 use embassy_executor::Spawner;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-// use embassy_sync::zerocopy_channel::{Channel, Sender};
 use embassy_time::Timer;
 
 use esp_hal::spi::{master::Config, master::Spi, Mode};
-use esp_hal::uart::{UartRx, UartTx};
+use esp_hal::uart::UartRx;
 use esp_hal::Async;
 use esp_hal::timer::timg::TimerGroup;
 
 
-use heapless::sorted_linked_list::Min;
 use lora_phy::iv::GenericSx126xInterfaceVariant;
 use lora_phy::sx126x::{Sx1262, Sx126x, TcxoCtrlVoltage};
 use lora_phy::{mod_params::*, sx126x};
 use lora_phy::LoRa;
 
-use postcard::{from_bytes, from_bytes_cobs};
+use postcard::from_bytes_cobs;
 
-// use Mesh::protocol;
-
-// use defmt::*;
 use esp_println::println;
 use esp_backtrace as _;
-use Mesh::protocol::{AprsCompressedPositionReport, MiniData};
+use esp_alloc as _;
+use Mesh::protocol::MiniData;
 
 const LORA_FREQUENCY_IN_HZ: u32 = 905_200_000; // warning: set this appropriately for the region
 
-// type ChannelBuffer = [u8; 96];
-// static CHANNEL: StaticCell<Channel<'_, NoopRawMutex, ChannelBuffer>> = StaticCell::new();
-static LORA_CHANNEL: Channel<CriticalSectionRawMutex, Mesh::protocol::MiniData, 10> = Channel::new();
-// static LORA_CHANNEL: Channel<CriticalSectionRawMutex, heapless::Vec<u8, 1024>, 10> = Channel::new();
+static PICO_CHANNEL: Channel<CriticalSectionRawMutex, Mesh::protocol::MiniData, 10> = Channel::new();
 
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
     esp_println::logger::init_logger_from_env();
-    // let peripherals = esp_hal::init({
-    //     let mut config = esp_hal::Config::default();
-    //     config.cpu_clock = esp_hal::clock::CpuClock::max();
-    //     config
-    // });
     let peripherals = esp_hal::init(
         esp_hal::Config::default()
             .with_cpu_clock(esp_hal::clock::CpuClock::max())
@@ -148,7 +136,6 @@ async fn main(spawner: Spawner) {
         .with_rx(
             esp_hal::uart::RxConfig::default()
             .with_fifo_full_threshold(127)
-            // .with_timeout(126)
             .with_timeout_none()
         );
     let uart = esp_hal::uart::Uart::new(peripherals.UART1, config)
@@ -161,15 +148,7 @@ async fn main(spawner: Spawner) {
 
     println!("Spawning read_pico task");
 
-    // Setup Zero Copy Channel
-    // static BUF: StaticCell<[ChannelBuffer; 1]> = StaticCell::new();
-    // let buf = BUF.init([[0; 96]; 1]);
-    // let channel = CHANNEL.init(Channel::new(buf));
-    // let (sender, mut receiver) = channel.split();
-
-//    spawner.spawn(send_pico(uart_tx)).unwrap();
-
-    match spawner.spawn(read_pico(uart_rx, LORA_CHANNEL.sender())) {
+    match spawner.spawn(read_pico(uart_rx, PICO_CHANNEL.sender())) {
         Ok(_) => {}
         Err(err) => {
             loop {
@@ -179,21 +158,22 @@ async fn main(spawner: Spawner) {
         }
     }
 
-    let gps_reciver = LORA_CHANNEL.receiver();
-
+    // Assigns the receiver to the channel
+    let pico = PICO_CHANNEL.receiver();
+    
     loop {
         println!("Waiting for data");
-        let buffer: heapless::Vec<u8, 208> = match postcard::to_vec_cobs(&gps_reciver.receive().await) {
+        
+
+
+        let buffer: heapless::Vec<u8, 255> = match postcard::to_vec_cobs(&pico.receive().await) {
             Ok(b) => b,
             Err(err) => {
                 println!("Serialization error = {:?}", err);
                 heapless::Vec::new()
             }
         };
-        // let data = gps_reciver.receive().await;
-        // let data: &[u8] = &data;
-        // let buffer = [0x01u8, 0x02u8, 0x03u8];
-        // println!("Recieved Buffer = {:?}", buffer);
+
         match lora
             .prepare_for_tx(&mdltn_params, &mut tx_pkt_params, 17, &buffer)
             .await
@@ -204,6 +184,20 @@ async fn main(spawner: Spawner) {
             }
         };
 
+        let rssi = match lora.get_rssi().await {
+            Ok(rssi) => rssi,
+            Err(_) => {
+                -128 // Return a default RSSI value on error
+            }
+        };
+
+        println!("RSSI = {}", rssi);
+
+        if rssi > -100 {
+            println!("RSSI is too low, skipping transmission");
+            continue;
+        }
+
         match lora.tx().await {
             Ok(()) => {
                 println!("TX DONE");
@@ -212,109 +206,8 @@ async fn main(spawner: Spawner) {
                 println!("Radio error = {:?}", err);
             }
         };
-
-        // match lora.get_rssi().await {
-        //     Ok(rssi) => {
-        //         println!("RSSI = {:?}", rssi);
-        //     }
-        //     Err(err) => {
-        //         println!("Radio error = {:?}", err);
-        //     }
-        // }
-        // Locks the Mutex
-        // receiver.receive_done();
-
-        // match lora.sleep(false).await {
-        //     Ok(()) => println!("Sleep successful"),
-        //     Err(err) => println!("Sleep unsuccessful = {:?}", err),
-        // }
-
-        // Timer::after_secs(1).await;
     }
 }
-
-// #[embassy_executor::task]
-// pub async fn send_pico(mut tx: UartTx<'static, Async>) {
-//     // Read data from lora radio, then send over uart to the pico
-//     loop {
-//         println!("Sending to Pico");
-//         let buffer =  [0x01u8, 0x02u8, 0x03u8];
-//         println!("Buffer = {:?}", buffer);
-//         match embedded_io_async::Write::write(&mut tx, &buffer).await {
-//             Ok(_) => {
-//                 println!("UART data sent");
-//             }
-//             Err(err) => {
-//                 println!("Error = {:?}", err);
-//                 Timer::after_secs(1).await;
-//                 continue;
-//             }
-//         }
-
-//         Timer::after_secs(1).await;
-//     }
-// }
-
-// #[embassy_executor::task]
-// pub async fn read_pico(mut rx: UartRx<'static, Async>, sender: Sender<'static, CriticalSectionRawMutex, heapless::Vec<u8, 1024>, 10>) {
-//     const READ_BUF_SIZE: usize = 1024;
-
-//     let mut rbuf: [u8; READ_BUF_SIZE] = [0u8; READ_BUF_SIZE];
-//     loop {
-//         println!("Reading from Pico");
-//         let r = embedded_io_async::Read::read(&mut rx, &mut rbuf).await;
-//         match rx.check_for_errors() {
-//             Ok(_) => {}
-//             Err(err) => {
-//                 println!("UART Error: {:?}", err);
-//                 continue;
-//             }
-//         }
-//         match r {
-//             Ok(len) => {
-//                 println!("Read {len} bytes: {:?}", &rbuf[..len]);
-
-//                 // Send the raw bytes over the channel
-//                 let mut data = heapless::Vec::<u8, 1024>::new();
-
-//                 // Attempt to deserialize the data
-//                 let aprs_report: Result<MiniData, _> = from_bytes(&rbuf[..len]);
-//                 match aprs_report {
-//                     Ok(report) => {
-//                         println!("Received data: {:?}", report);
-//                         // Serialize the data to send over the channel
-//                         match postcard::to_slice(&report, &mut data) {
-//                             Ok(_) => {
-//                                 println!("Serialized data: {:?}", data);
-//                             }
-//                             Err(err) => {
-//                                 println!("Serialization error: {:?}", err);
-//                                 continue;
-//                             }
-//                         }
-//                     }
-//                     Err(err) => {
-//                         println!("Deserialization error: {:?}", err);
-//                         continue;
-//                     }
-//                 }
-
-//                 if data.extend_from_slice(&rbuf[..len]).is_ok() {
-//                     sender.send(data).await;
-//                 } else {
-//                     println!("Error: Data too large for channel buffer");
-//                 }
-//             }
-//             Err(err) => {
-//                 println!("RX Error: {:?}", err);
-//                 continue;
-//             }
-//         }
-
-//         // Delay to avoid UART overrun issues
-//         Timer::after_millis(100).await;
-//     }
-// }
 
 #[embassy_executor::task]
 pub async fn read_pico(mut rx: UartRx<'static, Async>, sender: Sender<'static, CriticalSectionRawMutex, MiniData, 10>) {
@@ -329,7 +222,8 @@ pub async fn read_pico(mut rx: UartRx<'static, Async>, sender: Sender<'static, C
         // let mut offset = 0;
 
         loop {
-            let r = embedded_io_async::Read::read(&mut rx, &mut rbuf[offset..]).await;
+            // let r = embedded_io_async::Read::read(&mut rx, &mut rbuf[offset..]).await;
+            let r = rx.read_async(&mut rbuf[offset..]).await;
             match rx.check_for_errors() {
                 Ok(_) => {}
                 Err(err) => {
@@ -338,6 +232,7 @@ pub async fn read_pico(mut rx: UartRx<'static, Async>, sender: Sender<'static, C
                     continue;
                 }
             }
+
             match r {
                 Ok(len) => {
                     // println!("Read {len} bytes:");

@@ -12,6 +12,7 @@ use esp_hal::{gpio::{Level, Output}, i2c::master::{Config as I2CConfig, I2c}, ti
 
 use esp_println::println;
 use esp_backtrace as _;
+use esp_alloc as _;
 use esp_hal::timer::timg::TimerGroup;
 
 use embedded_graphics::{

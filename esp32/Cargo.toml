@@ -6,77 +6,63 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-
 defmt = "1.0"
 defmt-rtt = "1.0"
-# bytemuck = { version = "1.21", features = ["derive"] }
 
 embassy-executor    = { version = "0.7", features = ["task-arena-size-12288"] }
+# embassy-executor    = { version = "0.7", features = ["task-arena-size-32768"] }
 embassy-futures = "0.1"
-embassy-sync = { version = "0.6" }
+embassy-sync = { version = "0.6.2" }
 embassy-time        = { version = "0.4" , features = ["generic-queue-8"] }
 embassy-usb         = { version = "0.4", default-features = false }
 embassy-embedded-hal = "0.3"
+
 embedded-hal-async = "1.0"
 embedded-io-async ={ version = "0.6", default-features = false }
 embedded-hal = "1.0"
 embedded-hal-bus = { version = "0.3", features = ["async"]}
-#embedded-can        = "0.4.1"
-#embedded-graphics   = "0.8.1"
-#embedded-io         = { version = "0.6.1", default-features = false }
-#embedded-io-async   = "0.6.1"
-#embedded-storage    = "0.3.1"
 
-# esp-alloc = {  version = "0.7" }
-esp-alloc = { git = "https://github.com/esp-rs/esp-hal.git" }
+esp-alloc = { git = "https://github.com/esp-rs/esp-hal.git", rev="79ac43ca3d14f87cc067923880849ff03ff4c9ad"}
 esp-backtrace = { version = "0.15", features = [
     "exception-handler",
     "panic-handler",
     "println",
 ] }
-esp-hal = {  features = ["log", "unstable" ], git = "https://github.com/esp-rs/esp-hal.git"}
-esp-hal-embassy = {  features = [], git = "https://github.com/esp-rs/esp-hal.git"} # "integrated-timers"
+esp-hal = {  features = ["unstable" ], git = "https://github.com/esp-rs/esp-hal.git", rev="79ac43ca3d14f87cc067923880849ff03ff4c9ad"}
+esp-hal-embassy = {  features = [], git = "https://github.com/esp-rs/esp-hal.git", rev="79ac43ca3d14f87cc067923880849ff03ff4c9ad"} # "integrated-timers"
 esp-println = { version = "0.13", features = ["log"] }
 esp-storage = { version = "0.5", features = [] }
-# esp-wifi = { features = ["log", "esp-alloc", "ble"], git="https://github.com/esp-rs/esp-hal.git" }
-# bt-hci = { version = "0.2" }
+esp-wifi = { features = ["esp-alloc", "ble"], git="https://github.com/esp-rs/esp-hal.git", rev="79ac43ca3d14f87cc067923880849ff03ff4c9ad"}
+trouble-host = { git="https://github.com/embassy-rs/trouble.git", rev="9ebf44ee2189174ddd3ee9baa1a4aec1ca964fe8"}
+# trouble-host = { git="https://github.com/embassy-rs/trouble.git", rev="ceec09b", features = ["default-packet-pool-mtu-255"] }
 # trouble-host = { git="https://github.com/embassy-rs/trouble.git", rev="b6694cf00b602efe9c1c6e639e97218ebf623479" }
-# bitflags ={ version = "2.9"}
+bt-hci = { version = "0.3.0" }
 
-# fugit = "0.3"
-# heapless = "0.7"
-# log = "0.4"
-# static_cell = "2.1"
-# usb-device = "0.3"
-# usbd-serial = "0.2"
+log = "0.4"
+static_cell = "2.1"
 
 postcard = { version = "1" }
 serde = { version = "1.0", features = ["derive"], default-features = false}
-# byteorder ={ version = "1.5", default-features = false }
-# num-traits = { version = "0.2", default-features = false, features = ["libm"]}
 
 # Sensor Drivers
 ublox = { version = "0.5", default-features = false, features = ["serde", "ubx_proto23"] }
 UBLOX_rs = { path ="../libs/UBLOX-rs" }
-# chrono = { version = "0.4", default-features = false}
-# chrono-tz = { version = "0.10", default-features = false}
 
 # Lora Drivers
 lora-modulation = "0.1"
-lora-phy = { git = "https://github.com/lora-rs/lora-rs.git"}
+lora-phy = { git = "https://github.com/lora-rs/lora-rs.git", rev="a5e690a3f1f68c4e4c43efcd564467938c574ea3"}
 dummy-pin = "1.0"
 
 Mesh = { path = "../libs/Mesh" }
-# ssd1306 = "0.10"
-ssd1306 = { git = "https://github.com/rust-embedded-community/ssd1306.git"}
-embedded-graphics = "0.8"
+prost = { version = "0.13.5", default-features = false, features = ["derive"] }
 
 [features]
 default = ["esp32"]
-esp32 = ["esp-hal/esp32", "esp-hal-embassy/esp32", "esp-println/esp32", "esp-backtrace/esp32", "esp-storage/esp32"] # "esp-wifi/esp32"
+esp32 = ["esp-hal/esp32", "esp-hal-embassy/esp32", "esp-println/esp32", "esp-backtrace/esp32", "esp-storage/esp32", "esp-wifi/esp32"]
 
 [build-dependencies]
 embuild = "0.33"
+prost-build = "0.13"
 
 [profile.dev]
 # Rust debug is too slow.
